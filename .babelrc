@@ -1,0 +1,18 @@
+{
+  "plugins": [
+    "dynamic-import-node",
+    [
+      "module-resolver",
+      {
+        "root": [
+          "./modules"
+        ]
+      }
+    ],
+    "add-module-exports",
+    "transform-object-rest-spread",
+    "transform-decorators-legacy",
+    "transform-class-properties",
+    "transform-es2015-modules-commonjs"
+  ]
+}

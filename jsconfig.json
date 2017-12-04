@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./modules/",
+    "experimentalDecorators": true
+  },
+  "include": [
+    "src/**/*",
+    "modules/**/*",
+    "api/**/*"
+  ]
+}
