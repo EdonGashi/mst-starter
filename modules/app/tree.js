@@ -67,16 +67,13 @@ export function serialize(appNode) {
   invariant(appNode instanceof AppNode, 'Item must be an AppNode.')
   const result = {}
   for (const key in appNode) {
-    if (key === '__root') {
+    if (key === '__root' || key === '__volatile') {
       continue
     }
 
     const value = appNode[key]
     if (value instanceof AppNode) {
       result[key] = serialize(value)
-      continue
-    } else if (typeof value === 'function') {
-      // May be a helper function.
       continue
     }
 
@@ -99,13 +96,14 @@ export function serialize(appNode) {
   return result
 }
 
-export default class AppNode {
+export class AppNode {
   constructor(root, payload = {}) {
     if (!root) {
       root = this
     }
 
     this.__root = root
+    this.__volatile = {}
     for (const key in payload) {
       if (key.indexOf('__STATE_') === 0) {
         this[key] = payload[key]

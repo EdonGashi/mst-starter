@@ -1,4 +1,4 @@
-import { hydrate } from './AppNode'
+import { hydrate } from './tree'
 import invariant from 'utils/invariant'
 
 export default function initialize(path, leaf, env) {
