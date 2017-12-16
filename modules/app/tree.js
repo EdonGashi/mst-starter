@@ -1,6 +1,7 @@
-import { isRoot, getSnapshot } from 'mobx-state-tree'
+import { isRoot, getSnapshot, destroy as destroyMst } from 'mobx-state-tree'
 import invariant from 'utils/invariant'
 import warning from 'utils/warning'
+import initMiddleware from './internal/initMiddleware'
 
 function splitPath(path) {
   if (path instanceof Array) {
@@ -41,6 +42,32 @@ function createPath(appNode, path) {
   }
 }
 
+export function getLeaves(node, arr = []) {
+  if (node instanceof AppNode) {
+    const keys = Object.keys(node)
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      if (key.indexOf('__') === 0) {
+        continue
+      }
+
+      getLeaves(node[key])
+    }
+  } else if (node) {
+    arr.push(node)
+  }
+
+  return arr
+}
+
+export function destroy(appNode) {
+  getLeaves(appNode).forEach(leaf => {
+    if (isRoot(leaf)) {
+      destroyMst(leaf)
+    }
+  })
+}
+
 /* eslint-enable indent */
 
 export function hydrate(appNode, path, leaf, env) {
@@ -52,10 +79,15 @@ export function hydrate(appNode, path, leaf, env) {
 
   const snapshot = node['__STATE_' + key]
   let result
+  const app = appNode.__root
   if (typeof leaf === 'function') {
-    result = leaf(appNode.__root, env, snapshot)
+    result = leaf(app, env, snapshot)
   } else {
-    result = leaf.create(snapshot, { app: appNode.__root, env })
+    result = leaf.create(snapshot, { app, env })
+  }
+
+  if (isRoot(result)) {
+    initMiddleware(result, app)
   }
 
   node[key] = result
@@ -67,16 +99,6 @@ export function serialize(appNode) {
   invariant(appNode instanceof AppNode, 'Item must be an AppNode.')
   const result = {}
   for (const key in appNode) {
-    if (key === '__root' || key === '__volatile') {
-      continue
-    }
-
-    const value = appNode[key]
-    if (value instanceof AppNode) {
-      result[key] = serialize(value)
-      continue
-    }
-
     if (key.indexOf('__STATE_') === 0) {
       if (value !== null) {
         // This can happen when state has not been hydrated yet.
@@ -84,6 +106,14 @@ export function serialize(appNode) {
         result[key] = value
       }
 
+      continue
+    } else if (key.indexOf('__') === 0) {
+      continue
+    }
+
+    const value = appNode[key]
+    if (value instanceof AppNode) {
+      result[key] = serialize(value)
       continue
     }
 
@@ -100,10 +130,10 @@ export class AppNode {
   constructor(root, payload = {}) {
     if (!root) {
       root = this
+      this.__volatile = {}
     }
 
     this.__root = root
-    this.__volatile = {}
     for (const key in payload) {
       if (key.indexOf('__STATE_') === 0) {
         this[key] = payload[key]

@@ -1,19 +1,23 @@
 import { types as t, getEnv } from 'mobx-state-tree'
 import { matchRoutes } from 'react-router-config'
 import qs from 'querystringify'
-import wait from 'utils/wait'
 import { decode } from 'utils/string-encoding'
+import { getLeaves } from 'app/tree'
 
 function tryDecode(s) {
   if (typeof s === 'string' && s.length > 0) {
     try {
-      return { state: decode(s), validState: true }
+      return { state: decode(s), isValidState: true }
     } catch {
-      return { state: null, validState: false }
+      return { state: null, isValidState: false }
     }
   } else {
-    return { state: null, validState: true }
+    return { state: null, isValidState: true }
   }
+}
+
+function mapRoutes(routes) {
+
 }
 
 const Location = t
@@ -22,7 +26,7 @@ const Location = t
     hash: t.string,
     query: t.frozen,
     state: t.frozen,
-    validState: t.boolean
+    isValidState: t.boolean
   })
 
 const Match = t
@@ -52,7 +56,7 @@ export const Router = t
 
     return {
       views: {
-        get controller() {
+        get controllerTree() {
           const route = self.currentRoute
           if (route) {
             const key = route.aliasFor || route.path
@@ -91,17 +95,17 @@ export const Router = t
           const prevRoute = self.currentRoute
           let prevController
           if (prevRoute) {
-            prevController = self.controller
+            prevController = self.controllerTree
           }
 
           const { _s, ...query } = qs.parse(location.search || '')
-          const { state, validState } = tryDecode(_s)
+          const { state, isValidState } = tryDecode(_s)
           self.location = {
             pathname: location.pathname,
             hash: location.hash,
             query,
             state,
-            validState
+            isValidState
           }
 
           if (branch && branch.length) {
@@ -110,25 +114,22 @@ export const Router = t
             self.currentRoute = route
             self.match = match
 
-            const newController = self.controller
+            const newController = self.controllerTree
             if (newController && newController === prevController) {
-              if (newController.onUpdate) {
-                return wait(newController.onUpdate(), app)
-              }
-
+              getLeaves(newController).forEach(leaf => leaf.onUpdate && leaf.onUpdate())
               return
             }
 
             if (prevController) {
-              prevController.onLeave && prevController.onLeave()
+              getLeaves(prevController).forEach(leaf => leaf.onLeave && leaf.onLeave())
             }
 
-            if (newController && newController.onEnter) {
-              return wait(newController.onEnter(), app)
+            if (newController) {
+              getLeaves(newController).forEach(leaf => leaf.onEnter && leaf.onEnter())
             }
           } else if (prevController) {
             self.match = null
-            prevController.onLeave && prevController.onLeave()
+            getLeaves(prevController).forEach(leaf => leaf.onLeave && leaf.onLeave())
           }
         }
       }

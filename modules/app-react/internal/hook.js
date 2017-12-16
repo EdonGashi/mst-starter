@@ -1,7 +1,6 @@
 import { lifecycle } from 'recompose'
 import { hydrate } from 'app/tree'
 import invariant from 'utils/invariant'
-import wait from 'utils/wait'
 
 export default function hook(path, name, type, env) {
   invariant(type && type.create, 'Invalid leaf argument. Accepts only mst types.')
@@ -16,9 +15,25 @@ export default function hook(path, name, type, env) {
 
       const viewModel = hydrate(app, finalPath, type, env)
       this.setState({ [name]: viewModel })
-      if (viewModel.componentWillMount) {
-        wait(viewModel.componentWillMount())
+      if (app.__volatile.initialRender) {
+        viewModel.initialComponentWillMount && viewModel.initialComponentWillMount()
+      } else {
+        viewModel.componentWillMount && viewModel.componentWillMount()
       }
+    },
+    componentDidMount() {
+      const { app } = this.context
+      invariant(app, 'App root not found in context. Make sure to add a context provider.')
+      const viewModel = this.state[name]
+      if (app.__volatile.initialRender) {
+        viewModel.initialComponentDidMount && viewModel.initialComponentDidMount()
+      } else {
+        viewModel.componentDidMount && viewModel.componentDidMount()
+      }
+    },
+    componentWillUnmount() {
+      const viewModel = this.state[name]
+      viewModel.componentWillUnmount && viewModel.componentWillUnmount()
     },
     getChildContext() {
       return {
