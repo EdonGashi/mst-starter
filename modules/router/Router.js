@@ -40,7 +40,8 @@ const Match = t
 export const Router = t
   .model('Router', {
     location: t.maybe(Location),
-    match: t.maybe(Match)
+    match: t.maybe(Match),
+    action: t.maybe(t.string)
   })
   .volatile(self => {
     return {
@@ -89,8 +90,7 @@ export const Router = t
 
         },
 
-        onHistoryUpdate() {
-          const { location } = self.history
+        onHistoryUpdate(location, action) {
           const branch = matchRoutes(self.routes, location.pathname)
           const prevRoute = self.currentRoute
           let prevController
@@ -108,6 +108,7 @@ export const Router = t
             isValidState
           }
 
+          self.action = action
           if (branch && branch.length) {
             const { route, match } = branch[0]
             self.previousRoute = prevRoute
