@@ -1,7 +1,6 @@
 import { isRoot, getSnapshot, destroy as destroyMst } from 'mobx-state-tree'
 import invariant from 'utils/invariant'
 import warning from 'utils/warning'
-import initMiddleware from './internal/initMiddleware'
 
 function splitPath(path) {
   if (path instanceof Array) {
@@ -39,6 +38,13 @@ function createPath(appNode, path) {
         key: path[max]
       }
     }
+  }
+}
+
+function initMiddleware(root, app) {
+  const middleware = app.__volatile.middleware
+  if (middleware) {
+    middleware.forEach(m => m(root, app))
   }
 }
 

@@ -3,7 +3,7 @@ import warning from 'utils/warning'
 import invariant from 'utils/invariant'
 import Fiber from 'fibers'
 
-export default function initMiddleware(tree, app) {
+export default function fibers(tree, app) {
   addMiddleware(tree, function (call, next) {
     try {
       return next(call)
