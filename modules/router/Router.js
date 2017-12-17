@@ -223,7 +223,10 @@ export const Router = t
           if (route.beforeEnter) {
             let result
             try {
-              result = route.beforeEnter(param)
+              result = route.beforeEnter({
+                ...param,
+                app
+              }) // We can pass app since this is not a mst node.
               if (result && result.then) {
                 result = yield result
               }
