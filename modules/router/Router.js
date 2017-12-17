@@ -60,13 +60,13 @@ export const Router = t
     let confirmCallback
     function confirmation(message, callback) {
       confirmCallback = callback
-      self.beforeHistoryUpdate()
+      self._beforeHistoryUpdate()
     }
 
     const getMatch = memoize(function (pathname) {
       const branch = matchRoutes(self.routes, pathname)
       if (branch && branch.length) {
-        const { route, match } = branch
+        const { route, match } = branch[0]
         return {
           route,
           match: Match.create(match)
@@ -123,7 +123,7 @@ export const Router = t
             return 'Cannot perform this action.'
           })
 
-          unlisten = history.listen(self.onHistoryUpdate)
+          unlisten = history.listen(self._onHistoryUpdate)
         },
 
         beforeDestroy() {
@@ -141,7 +141,7 @@ export const Router = t
 
         },
 
-        beforeHistoryUpdate: flow(function* () {
+        _beforeHistoryUpdate: flow(function* () {
           const location = confirmLocation
           const action = confirmAction
           const callback = confirmCallback
@@ -154,94 +154,116 @@ export const Router = t
             return
           }
 
-          if (location && action && callback) {
-            locked = true
+          if (!(location && action && callback)) {
+            warning(false, 'A route transition has occurred outside of the router cycle. You should not update the underlying history manually.')
+            callback(false)
+            return
+          }
 
-            const param = {
-              action: action,
-              location: getLocation(location),
-              match: null,
-              isUpdate: false
-            }
+          locked = true
+          const param = {
+            action: action,
+            location: getLocation(location),
+            match: null,
+            isUpdate: false
+          }
 
-            const branch = getMatch(location.pathname)
-            let route = null
-            if (branch) {
-              route = branch.route
-              param.match = branch.match
-              param.isUpdate = route === self.currentRoute
-            }
+          const branch = getMatch(location.pathname)
+          let route = null
+          if (branch) {
+            route = branch.route
+            param.match = branch.match
+            param.isUpdate = route === self.currentRoute
+          }
 
-            let shouldContinue = true
-            try {
-              const oldController = self.controllerTree
-              if (oldController) {
-                const controllers = getLeaves(oldController)
-                for (let i = 0; i < controllers.length; i++) {
-                  const controller = controllers[i]
-                  if (controller.beforeLeave) {
-                    let result = controller.beforeLeave(param)
-                    if (result && result.then) {
-                      result = yield result
-                    }
-
-                    if (result === false) {
-                      shouldContinue = false
-                      break
-                    } else if (result === true) {
-                      continue
-                    } else {
-                      warning(false, 'beforeLeave() should return either true or false')
-                    }
+          let shouldContinue = true
+          const oldController = self.controllerTree
+          if (oldController) {
+            const controllers = getLeaves(oldController)
+            for (let i = 0; i < controllers.length; i++) {
+              const controller = controllers[i]
+              if (controller.beforeLeave) {
+                try {
+                  let result = controller.beforeLeave(param)
+                  if (result && result.then) {
+                    result = yield result
                   }
+
+                  if (result === false) {
+                    shouldContinue = false
+                    break
+                  } else if (result === true) {
+                    continue
+                  } else {
+                    warning(false, 'beforeLeave() should return either true or false.')
+                  }
+                } catch (err) {
+                  warning(false, 'beforeLeave() threw an unhandled exception. Lifecycle methods should never throw.')
+                  if (process.env.NODE_ENV !== 'production') {
+                    console.error(err)
+                  }
+
+                  continue
                 }
               }
+            }
+          }
+
+          if (!shouldContinue) {
+            locked = false
+            callback(false)
+            return
+          }
+
+          if (!route) {
+            locked = false
+            callback(true)
+            return
+          }
+
+          if (route.beforeEnter) {
+            let result
+            try {
+              result = route.beforeEnter(param)
+              if (result && result.then) {
+                result = yield result
+              }
             } catch (err) {
-              warning(false, 'beforeLeave() threw an unhandled exception.')
+              warning(false, `beforeEnter() in '${route.path}' threw an unhandled exception. Lifecycle methods should never throw.`)
               if (process.env.NODE_ENV !== 'production') {
                 console.error(err)
               }
-            }
 
-            if (!shouldContinue) {
-              locked = false
               callback(false)
+              locked = false
               return
             }
 
-            if (route) {
-              if (route.beforeEnter) {
-                let result = route.beforeEnter(param)
-                if (result && result.then) {
-                  result = yield result
-                }
-
-                if (typeof result === 'boolean') {
-                  locked = false
-                  callback(result)
-                } else if (result && typeof result === 'object' || typeof result === 'string') {
-                  callback(false)
-                  locked = false
-                  if (result.action === 'push' || result.action === 'PUSH') {
-                    self.push(result)
-                  } else {
-                    self.replace(result)
-                  }
-                } else {
-                  warning(false, 'Invalid result returned from beforeEnter().')
-                }
+            if (typeof result === 'boolean') {
+              if (result) {
+                locked = false
+                callback(true)
+              } else {
+                callback(false)
+                locked = false
+              }
+            } else if (result && typeof result === 'object' || typeof result === 'string') {
+              callback(false)
+              locked = false
+              if (result.action === 'push' || result.action === 'PUSH') {
+                self.push(result)
+              } else {
+                self.replace(result)
               }
             } else {
+              warning(false, `Invalid result returned from beforeEnter() in route '${route.path}'.`)
               locked = false
               callback(true)
             }
-
-          } else {
-            warning(false, 'A route transition has occurred outside of the router cycle. You should not update the underlying history manually.')
           }
         }),
 
-        onHistoryUpdate(location, action) {
+        _onHistoryUpdate(location, action) {
           warning(locked, 'A history update has occurred while the router is locked. You should not update the underlying history manually.')
           const prevRoute = self.currentRoute
           let prevController
