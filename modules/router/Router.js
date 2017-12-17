@@ -63,6 +63,19 @@ export const Router = t
       self._beforeHistoryUpdate()
     }
 
+    function wrap(func) {
+      return function (arg) {
+        try {
+          return func(arg)
+        } catch (err) {
+          warning(false, 'A controller method threw an unhandled exception. Lifecycle methods should never throw.')
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(err)
+          }
+        }
+      }
+    }
+
     const getMatch = memoize(function (pathname) {
       const branch = matchRoutes(self.routes, pathname)
       if (branch && branch.length) {
@@ -144,7 +157,7 @@ export const Router = t
         _beforeHistoryUpdate: flow(function* () {
           const location = confirmLocation
           const action = confirmAction
-          const callback = confirmCallback
+          let callback = confirmCallback
           confirmLocation = null
           confirmAction = null
           confirmCallback = null
@@ -157,6 +170,21 @@ export const Router = t
           if (!(location && action && callback)) {
             warning(false, 'A route transition has occurred outside of the router cycle. You should not update the underlying history manually.')
             return
+          }
+
+          if (process.env.SERVER) {
+            const wrapped = callback
+            callback = function (ok) {
+              if (ok) {
+                if (self.location) {
+                  // TODO: HTTP Redirect
+                } else {
+                  return wrapped(ok)
+                }
+              } else {
+                return wrapped(ok)
+              }
+            }
           }
 
           locked = true
@@ -246,6 +274,7 @@ export const Router = t
                 locked = false
                 callback(true)
               } else {
+                warning(false, 'You should not return false from beforeEnter(). This may result in 404 errors if an initial route rejects entering.')
                 callback(false)
                 locked = false
               }
@@ -253,12 +282,12 @@ export const Router = t
               callback(false)
               locked = false
               if (result.action === 'push' || result.action === 'PUSH') {
-                self.push(result)
+                self.push(result.location || result)
               } else {
-                self.replace(result)
+                self.replace(result.location || result)
               }
             } else {
-              warning(false, `Invalid result returned from beforeEnter() in route '${route.path}'.`)
+              warning(false, `Invalid result returned from beforeEnter() in route '${route.path}'. Return true to indicate the transition should continue.`)
               locked = false
               callback(true)
             }
@@ -266,7 +295,7 @@ export const Router = t
         }),
 
         _onHistoryUpdate(location, action) {
-          warning(locked, 'A history update has occurred while the router is locked. You should not update the underlying history manually.')
+          warning(locked, 'A history update has occurred while the router was locked. You should not update the underlying history manually.')
           const prevRoute = self.currentRoute
           let prevController
           if (prevRoute) {
@@ -283,20 +312,20 @@ export const Router = t
 
             const newController = self.controllerTree
             if (newController && newController === prevController) {
-              getLeaves(newController).forEach(leaf => leaf.onUpdate && leaf.onUpdate())
+              getLeaves(newController).forEach(wrap(leaf => leaf.onUpdate && leaf.onUpdate()))
               return
             }
 
             if (prevController) {
-              getLeaves(prevController).forEach(leaf => leaf.onLeave && leaf.onLeave())
+              getLeaves(prevController).forEach(wrap(leaf => leaf.onLeave && leaf.onLeave()))
             }
 
             if (newController) {
-              getLeaves(newController).forEach(leaf => leaf.onEnter && leaf.onEnter())
+              getLeaves(newController).forEach(wrap(leaf => leaf.onEnter && leaf.onEnter()))
             }
           } else if (prevController) {
             self.match = null
-            getLeaves(prevController).forEach(leaf => leaf.onLeave && leaf.onLeave())
+            getLeaves(prevController).forEach(wrap(leaf => leaf.onLeave && leaf.onLeave()))
           }
         }
       }
