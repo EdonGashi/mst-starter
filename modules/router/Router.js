@@ -156,7 +156,6 @@ export const Router = t
 
           if (!(location && action && callback)) {
             warning(false, 'A route transition has occurred outside of the router cycle. You should not update the underlying history manually.')
-            callback(false)
             return
           }
 
