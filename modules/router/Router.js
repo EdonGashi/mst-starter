@@ -1,10 +1,11 @@
 import { types as t, getEnv, flow } from 'mobx-state-tree'
 import { matchRoutes } from 'react-router-config'
 import qs from 'querystringify'
-import { decode } from 'utils/string-encoding'
+import { encode, decode } from 'utils/string-encoding'
 import { getLeaves } from 'app/tree'
 import warning from 'utils/warning'
 import memoize from 'utils/memoize'
+import { parsePath, createPath } from 'history/PathUtils'
 
 function tryDecode(s) {
   if (typeof s === 'string' && s.length > 0) {
@@ -15,6 +16,61 @@ function tryDecode(s) {
     }
   } else {
     return { state: null, isValidState: true }
+  }
+}
+
+function merge(query, state) {
+  if (state !== undefined && state !== null) {
+    state = encode(state)
+    if (!query) {
+      return { _state: state }
+    }
+
+    if (typeof query === 'string') {
+      query = qs.parse(query)
+    } else if (typeof query !== 'object') {
+      warning(false, 'Invalid query object.')
+      return { _state: state }
+    }
+
+    warning(!('_state' in query), 'Query object should not contain key \'_state\' because it will be overwritten by state.')
+    return qs.stringify({ ...query, _state: state })
+  } else if (query !== null && typeof query === 'object') {
+    return qs.stringify(query)
+  } else if (typeof query === 'string') {
+    return query
+  } else {
+    return ''
+  }
+}
+
+function createLocation(path, query, state, hash) {
+  const { pathname, search: searchStr, hash: hashStr } = parsePath(path)
+  warning(query && searchStr, 'A query string is found in path. This will be overwritten because \'query\' parameter exists in location.')
+  warning(hash && hashStr, 'A hash string is found in path. This will be overwritten because \'hash\' parameter exists in location.')
+  return {
+    pathname,
+    search: merge(query || searchStr, state),
+    hash: hash || hashStr
+  }
+}
+
+function transformLocation(arg) {
+  if (typeof arg === 'string') {
+    return arg
+  } else if (arg !== null && typeof arg === 'object') {
+    const {
+      path,
+      query,
+      state,
+      hash
+    } = arg
+    return createLocation(path, query, state, hash)
+  } else if (arg instanceof Array) {
+    const [path, query, state, hash] = arg
+    return createLocation(path, query, state, hash)
+  } else {
+    throw new Error('Invalid location.')
   }
 }
 
@@ -90,8 +146,8 @@ export const Router = t
     })
 
     const getLocation = memoize(function (location) {
-      const { _s, ...query } = qs.parse(location.search || '')
-      const { state, isValidState } = tryDecode(_s)
+      const { _state, ...query } = qs.parse(location.search || '')
+      const { state, isValidState } = tryDecode(_state)
       return Location.create({
         pathname: location.pathname,
         hash: location.hash,
@@ -146,12 +202,24 @@ export const Router = t
           unlisten = null
         },
 
-        push(location) {
-
+        push(path) {
+          self.history.push(transformLocation(path))
         },
 
-        replace(location) {
+        replace(path) {
+          self.history.replace(transformLocation(path))
+        },
 
+        go(n) {
+          self.history.go(n)
+        },
+
+        goBack() {
+          self.history.goBack()
+        },
+
+        goForward() {
+          self.history.goForward()
         },
 
         _beforeHistoryUpdate: flow(function* () {
