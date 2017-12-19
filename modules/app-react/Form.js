@@ -1,7 +1,7 @@
 import React from 'react'
 import propTypes from 'prop-types'
 import invariant from 'utils/invariant'
-import qs from 'utils/qs'
+import { parse } from 'qs-fork'
 
 const arrayFrom = Array.from || (obj => [].slice.call(obj))
 function getFormElements(form) {
