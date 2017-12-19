@@ -1,6 +1,6 @@
 import { types as t, getEnv, flow } from 'mobx-state-tree'
 import { matchRoutes } from 'react-router-config'
-import qs from 'querystringify'
+import qs from 'utils/qs'
 import { encode, decode } from 'utils/string-encoding'
 import { getLeaves } from 'app/tree'
 import warning from 'utils/warning'
