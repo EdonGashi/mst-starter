@@ -1,18 +1,27 @@
 {
-  "plugins": [
-    "dynamic-import-node",
-    [
-      "module-resolver",
-      {
-        "root": [
-          "./modules"
-        ]
-      }
-    ],
-    "add-module-exports",
-    "transform-object-rest-spread",
-    "transform-decorators-legacy",
-    "transform-class-properties",
-    "transform-es2015-modules-commonjs"
-  ]
+  "env": {
+    "browser": {
+      "presets": [
+        "env",
+        "react",
+        "stage-2"
+      ],
+      "plugins": [
+        "universal-import",
+        "transform-decorators-legacy",
+        "dev-expression"
+      ]
+    },
+    "node": {
+      "presets": [
+        "react"
+      ],
+      "plugins": [
+        "universal-import",
+        "transform-object-rest-spread",
+        "transform-class-properties",
+        "transform-decorators-legacy"
+      ]
+    }
+  }
 }

@@ -2,6 +2,7 @@ import { addMiddleware } from 'mobx-state-tree'
 import warning from 'utils/warning'
 import invariant from 'utils/invariant'
 import Fiber from 'fibers'
+import { flushChunkNames } from 'react-universal-component/dist/requireUniversalModule'
 
 export default function fibers(tree, app) {
   addMiddleware(tree, function (call, next) {
@@ -12,6 +13,15 @@ export default function fibers(tree, app) {
         const frame = ++app.__volatile.asyncFrame
         if (frame === 1) {
           invariant(Fiber.current && Fiber.current === app.__volatile.fiber, 'An async flow has been initiated from outside a render frame.')
+          const newChunks = flushChunkNames()
+          let chunkNames = app.__volatile.chunkNames
+          if (chunkNames) {
+            newChunks.forEach(chunk => chunkNames.add(chunk))
+          } else {
+            chunkNames = new Set(newChunks)
+            app.__volatile.chunkNames = chunkNames
+          }
+
           Fiber.yield()
         }
       } else if (call.type === 'flow_return' || call.type === 'flow_throw') {

@@ -77,7 +77,7 @@ export function destroy(appNode) {
 /* eslint-enable indent */
 
 export function hydrate(appNode, path, leaf, env) {
-  invariant(appNode instanceof AppNode, 'Item must be an AppNode.')
+  invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got ${appNode} instead.`)
   const { node, key } = createPath(appNode, path)
   if (key in node) {
     return node[key]
@@ -102,9 +102,10 @@ export function hydrate(appNode, path, leaf, env) {
 }
 
 export function serialize(appNode) {
-  invariant(appNode instanceof AppNode, 'Item must be an AppNode.')
+  invariant(appNode instanceof AppNode, 'Item being serialized must be an AppNode.')
   const result = {}
   for (const key in appNode) {
+    const value = appNode[key]
     if (key.indexOf('__STATE_') === 0) {
       if (value !== null) {
         // This can happen when state has not been hydrated yet.
@@ -117,14 +118,12 @@ export function serialize(appNode) {
       continue
     }
 
-    const value = appNode[key]
     if (value instanceof AppNode) {
       result[key] = serialize(value)
       continue
     }
 
     if (isRoot(value)) {
-      warning(!('__STATE_' + key in appNode), `Key ${key} already exists in context.`)
       result['__STATE_' + key] = getSnapshot(value)
     }
   }
