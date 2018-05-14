@@ -7,17 +7,17 @@ export default function fiber() {
         const current = Fiber.current
         next()
           .then(result => {
-            resolve(result)
             current.run()
+            resolve(result)
           })
           .catch(error => {
-            reject(error)
             current.run()
+            reject(error)
           })
         Fiber.yield()
       })
 
-      ctx.app.__volatile.fiber = currentFiber
+      ctx.app.__volatile.__fiber = currentFiber
       currentFiber.run()
     })
   }

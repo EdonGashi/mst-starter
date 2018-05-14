@@ -17,7 +17,10 @@ export default function polyfill() {
       }
     }
 
-    ctx.render.scripts.push('<script>' + polyfillString + '</script>')
+    if (polyfillString) {
+      ctx.render.scripts.push('<script>' + polyfillString + '</script>')
+    }
+
     return next()
   }
 }

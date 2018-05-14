@@ -1,4 +1,3 @@
-
 import compose from 'koa-compose'
 import { init, fiber, polyfill, render } from './middlewares'
 
@@ -8,7 +7,7 @@ useStaticRendering(true)
 export default ({ clientStats }) => {
   return compose([
     init(),
-    polyfill(),
+    // polyfill(),
     fiber(),
     render({ clientStats })
   ])

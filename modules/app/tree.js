@@ -1,6 +1,6 @@
-import { isRoot, getSnapshot, destroy as destroyMst } from 'mobx-state-tree'
 import invariant from 'utils/invariant'
-import warning from 'utils/warning'
+import { toJS } from 'mobx'
+import { isStateTreeNode, isRoot, getSnapshot } from 'mobx-state-tree'
 
 function splitPath(path) {
   if (path instanceof Array) {
@@ -26,10 +26,12 @@ function createPath(appNode, path) {
       for (let i = 0; i < max; i++) {
         const key = path[i]
         if (!(key in node)) {
-          node[key] = new AppNode(root, node['__STATE_' + key])
+          const newNode = new AppNode(root, node['__STATE_' + key])
+          node[key] = newNode
+          node = newNode
         } else {
-          node = node[key]
           invariant(node instanceof AppNode, 'A node in path is found to be a non AppNode.')
+          node = node[key]
         }
       }
 
@@ -41,8 +43,8 @@ function createPath(appNode, path) {
   }
 }
 
-function initMiddleware(root, app) {
-  const middleware = app.__volatile.middleware
+function initMiddleware(instance, app) {
+  const middleware = app.__volatile.__middleware
   if (middleware) {
     middleware.forEach(m => m(root, app))
   }
@@ -66,17 +68,9 @@ export function getLeaves(node, arr = []) {
   return arr
 }
 
-export function destroy(appNode) {
-  getLeaves(appNode).forEach(leaf => {
-    if (isRoot(leaf)) {
-      destroyMst(leaf)
-    }
-  })
-}
-
 /* eslint-enable indent */
 
-export function hydrate(appNode, path, leaf, env) {
+export function hydrate(appNode, path, type, env = {}) {
   invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got ${appNode} instead.`)
   const { node, key } = createPath(appNode, path)
   if (key in node) {
@@ -84,18 +78,37 @@ export function hydrate(appNode, path, leaf, env) {
   }
 
   const snapshot = node['__STATE_' + key]
-  let result
   const app = appNode.__root
-  if (typeof leaf === 'function') {
-    result = leaf(app, env, snapshot)
-  } else {
-    result = leaf.create(snapshot, { app, env })
+  if (type.dependencies && typeof type.dependencies === 'object') {
+    const dependencies = type.dependencies
+    for (const dependency in dependencies) {
+      let childType = dependencies[dependency]
+      let childEnv
+      if (Array.isArray(childType)) {
+        childEnv = childType[1] || {}
+        childEnv = { ...env, ...childEnv }
+        childType = childType[0]
+      } else {
+        childEnv = env
+      }
+
+      hydrate(app, dependency, childType, childEnv)
+    }
   }
 
-  if (isRoot(result)) {
-    initMiddleware(result, app)
+  invariant(typeof type.create === 'function', 'Leaf type must expose a create(snapshot) method.')
+  const result = type.create(snapshot, { app, env })
+
+  if (result && typeof result === 'object') {
+    Object.defineProperty(result, '$app', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: app
+    })
   }
 
+  initMiddleware(result, app)
   node[key] = result
   node['__STATE_' + key] = null
   return result
@@ -123,8 +136,12 @@ export function serialize(appNode) {
       continue
     }
 
-    if (isRoot(value)) {
+    if (isStateTreeNode(value) && isRoot(value)) {
       result['__STATE_' + key] = getSnapshot(value)
+    } else if (typeof value.toJSON === 'function') {
+      result['__STATE_' + key] = value.toJSON()
+    } else {
+      result['__STATE_' + key] = toJS(value)
     }
   }
 
@@ -136,6 +153,7 @@ export class AppNode {
     if (!root) {
       root = this
       this.__volatile = {}
+      this.__env = {}
     }
 
     this.__root = root

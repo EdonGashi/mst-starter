@@ -1,13 +1,25 @@
-import createApp from '../../src/app'
+import createApp from 'createApp'
+import createHistory from 'history/createMemoryHistory'
+import errorFormatter from 'error-formatter'
 
 export default function init() {
-  return function (ctx, next) {
+  return async function (ctx, next) {
     ctx.render = {
       head: [],
       scripts: []
     }
 
-    ctx.app = createApp()
-    return next()
+    const history = createHistory({ initialEntries: [ctx.path] })
+    ctx.app = createApp(null, { history })
+    try {
+      await next()
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        ctx.body = errorFormatter(err)
+        return
+      }
+
+      ctx.throw(err)
+    }
   }
 }

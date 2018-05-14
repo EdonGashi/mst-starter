@@ -1,16 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/server'
 import { serialize } from 'app'
-import App from '../../src/components/App'
-import { flushChunkNames } from 'react-universal-component/server'
+import AppRoot from 'components/App'
+import { ReportChunks } from 'react-universal-component'
 import flushChunks, { filesFromChunks } from 'webpack-flush-chunks'
 import fs from 'fs'
 import path from 'path'
 
 function readBootstrap(clientStats) {
-  console.log(filesFromChunks(['bootstrap'], clientStats.assetsByChunkName))
   const fileName = filesFromChunks(['bootstrap'], clientStats.assetsByChunkName)[0]
-  console.log('paths', process.env.CLIENT_ROOT, fileName)
   const bootstrap = fs
     .readFileSync(path.join(process.env.CLIENT_ROOT, fileName), 'utf8')
     .replace('//# sourceMappingURL=bootstrap.', '//# sourceMappingURL=/static/bootstrap.')
@@ -36,18 +34,15 @@ export default function render({ clientStats }) {
   const bootstrap = readBootstrap(clientStats)
   return function (ctx) {
     const app = ctx.app
-    // const history = createHistory({ initialEntries: [ctx.path] })
-    const domString = ReactDOM.renderToString(<App />)
-    const oldChunkNames = app.__volatile.chunkNames
-    const newChunkNames = flushChunkNames()
-    let chunkNames
-    if (oldChunkNames) {
-      newChunkNames.forEach(chunk => oldChunkNames.add(chunk))
-      chunkNames = Array.from(oldChunkNames)
-    } else {
-      chunkNames = newChunkNames
-    }
 
+    let chunkNames = new Set()
+    const domString = ReactDOM.renderToString(
+      <ReportChunks report={chunkName => chunkNames.add(chunkName)}>
+        <AppRoot app={app} />
+      </ReportChunks>
+    )
+
+    chunkNames = Array.from(chunkNames)
     const { js, styles, cssHash } = flushChunks(clientStats, { chunkNames, before: ['vendor'] })
     // console.log('PATH', ctx.path)
     // console.log('DYNAMIC CHUNK NAMES RENDERED', chunkNames)
@@ -66,7 +61,7 @@ export default function render({ clientStats }) {
     }
 
     const { helmet } = helmetContext
-    ctx.body = `<!DOCTYPE html>
+    const bodyString = `<!DOCTYPE html>
 <html ${helmet.htmlAttributes.toString()}>
   <head>
     ${helmet.meta.toString()}
@@ -81,10 +76,12 @@ export default function render({ clientStats }) {
     <script>
 ${bootstrap}
     </script>
-    <script>window.__STATE__=${stringify(serialize(app))};</script>
+    <script>window.__STATE__=${stringify(serialize(app))}</script>
     ${cssHash}
     ${js}
   </body>
 </html>`
+
+    ctx.body = bodyString
   }
 }
