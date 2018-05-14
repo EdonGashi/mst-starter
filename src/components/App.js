@@ -30,10 +30,10 @@ class MyStore {
   }
 }
 
-@inject('service.myStore')
+@inject('greeter=service.myStore')
 class MyComponent extends React.Component {
   render() {
-    return <div>Hello from subComponent: {this.props.myStore.greeting}</div>
+    return <div>Hello from subComponent: {this.props.greeter.greeting}</div>
   }
 }
 
