@@ -70,7 +70,9 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env': {
-        NODE_ENV: JSON.stringify('production')
+        NODE_ENV: JSON.stringify('production'),
+        IS_SERVER: JSON.stringify(false),
+        IS_CLIENT: JSON.stringify(true)
       }
     }),
     new webpack.optimize.UglifyJsPlugin({

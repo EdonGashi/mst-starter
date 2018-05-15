@@ -83,7 +83,9 @@ module.exports = {
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
         CLIENT_ROOT: JSON.stringify(res('../buildClient')),
-        SERVER_ROOT: JSON.stringify(res('../buildServer'))
+        SERVER_ROOT: JSON.stringify(res('../buildServer')),
+        IS_SERVER: JSON.stringify(true),
+        IS_CLIENT: JSON.stringify(false)
       }
     })
   ]

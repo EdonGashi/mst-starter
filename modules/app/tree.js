@@ -72,6 +72,7 @@ export function getLeaves(node, arr = []) {
 
 export function hydrate(appNode, path, type, env = {}) {
   invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got ${appNode} instead.`)
+  invariant(type, `Invalid type provided for hydration in path '${path}'.`)
   const { node, key } = createPath(appNode, path)
   if (key in node) {
     return node[key]
@@ -96,8 +97,14 @@ export function hydrate(appNode, path, type, env = {}) {
     }
   }
 
-  invariant(typeof type.create === 'function', 'Leaf type must expose a create(snapshot) method.')
-  const result = type.create(snapshot, { app, env })
+  let result
+  if (typeof type.create === 'function') {
+    result = type.create(snapshot, { app, env })
+  } else if (typeof type === 'function') {
+    result = new type(snapshot, { app, env })
+  } else {
+    invariant(false, `Invalid type provided for hydration in path '${path}'.`)
+  }
 
   if (result && typeof result === 'object') {
     Object.defineProperty(result, '$app', {

@@ -1,4 +1,4 @@
 export * from './initialize'
 export * from './tree'
 export * from './state-utils'
-export * from './tracked'
+export { default as tracked } from './tracked'

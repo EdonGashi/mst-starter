@@ -7,10 +7,9 @@ import flushChunks, { filesFromChunks } from 'webpack-flush-chunks'
 import fs from 'fs'
 import path from 'path'
 
-function readBootstrap(clientStats) {
-  const fileName = filesFromChunks(['bootstrap'], clientStats.assetsByChunkName)[0]
+function readBootstrap(manifestName) {
   const bootstrap = fs
-    .readFileSync(path.join(process.env.CLIENT_ROOT, fileName), 'utf8')
+    .readFileSync(path.join(process.env.CLIENT_ROOT, manifestName), 'utf8')
     .replace('//# sourceMappingURL=bootstrap.', '//# sourceMappingURL=/static/bootstrap.')
   return bootstrap
 }
@@ -31,7 +30,14 @@ function merge(array) {
 }
 
 export default function render({ clientStats }) {
-  const bootstrap = readBootstrap(clientStats)
+  const manifestName = filesFromChunks(['bootstrap'], clientStats.assetsByChunkName)[0]
+  let bootstrap
+  if (process.env.NODE_ENV === 'production') {
+    bootstrap = '<script>' + readBootstrap(manifestName) + '</script>'
+  } else {
+    bootstrap = `<script src="/static/${manifestName}"></script>`
+  }
+
   return function (ctx) {
     const app = ctx.app
 
@@ -50,36 +56,24 @@ export default function render({ clientStats }) {
     // console.log('STYLESHEETS SERVED', stylesheets)
 
     const renderopts = ctx.render || {}
-    const helmetContext = app.__volatile.helmetContext || {
-      helmet: {
-        htmlAttributes: '',
-        title: 'App',
-        meta: '',
-        link: '',
-        bodyAttributes: ''
-      }
-    }
-
-    const { helmet } = helmetContext
+    const { helmet } = app.__volatile.helmetContext
     const bodyString = `<!DOCTYPE html>
 <html ${helmet.htmlAttributes.toString()}>
-  <head>
-    ${helmet.meta.toString()}
-    ${helmet.title.toString()}
-    ${merge(renderopts.head)}
-    ${styles}
-    ${helmet.link.toString()}
-  </head>
-  <body ${helmet.bodyAttributes.toString()}>
-    <div id="root">${domString}</div>
-    ${merge(renderopts.scripts)}
-    <script>
+<head>
+  ${helmet.meta.toString()}
+  ${helmet.title.toString()}
+  ${merge(renderopts.head)}
+  ${styles}
+  ${helmet.link.toString()}
+</head>
+<body ${helmet.bodyAttributes.toString()}>
+<div id="root">${domString}</div>
+${merge(renderopts.scripts)}
 ${bootstrap}
-    </script>
-    <script>window.__STATE__=${stringify(serialize(app))}</script>
-    ${cssHash}
-    ${js}
-  </body>
+<script>window.__STATE__=${stringify(serialize(app))}</script>
+${cssHash}
+${js}
+</body>
 </html>`
 
     ctx.body = bodyString
