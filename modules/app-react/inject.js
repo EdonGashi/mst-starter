@@ -2,8 +2,6 @@ import { inject as mobxInject } from 'mobx-react'
 import get from 'lodash/get'
 import toPath from 'lodash/toPath'
 
-const msg = (path) => `An error occurred while injecting '${path}'.`
-
 function fromPaths(paths, useApp) {
   return function (baseStores, nextProps) {
     paths.forEach(function (path) {
@@ -25,7 +23,7 @@ function fromPaths(paths, useApp) {
       if (object) {
         nextProps[storeName] = object
       } else {
-        throw new Error(msg(path))
+        throw new Error(`Could not find '${path}' in context.`)
       }
     })
 
@@ -39,4 +37,8 @@ export function inject(...stores) {
 
 export function injectContext(...stores) {
   return mobxInject(fromPaths(stores, false))
+}
+
+inject.app = function () {
+  return mobxInject('app')
 }

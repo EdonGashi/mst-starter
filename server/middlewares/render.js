@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/server'
 import { serialize } from 'app'
-import AppRoot from 'components/App'
+import AppRoot from 'init/App'
 import { ReportChunks } from 'react-universal-component'
 import flushChunks, { filesFromChunks } from 'webpack-flush-chunks'
 import fs from 'fs'

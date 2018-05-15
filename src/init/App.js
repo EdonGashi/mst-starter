@@ -1,10 +1,8 @@
 import React from 'react'
 import universal from 'react-universal-component'
-import { HelmetProvider } from 'react-helmet-async'
+import Helmet, { HelmetProvider } from 'react-helmet-async'
 import { Provider } from 'mobx-react'
-import '../css/App'
 import { extend, inject } from 'app-react'
-import PropTypes from 'prop-types'
 
 // const UniversalComponent = universal(props => import(`./${props.page}`), {
 //   minDelay: 500,
@@ -30,6 +28,7 @@ class MyStore {
   }
 }
 
+@extend('service.myStore', MyStore)
 @inject('greeter=service.myStore')
 class MyComponent extends React.Component {
   render() {
@@ -37,11 +36,13 @@ class MyComponent extends React.Component {
   }
 }
 
-@extend('service.myStore', MyStore)
 class App extends React.Component {
   render() {
     return <div>
       <h1>Hello React!!!</h1>
+      <Helmet>
+        <title>Test!!!</title>
+      </Helmet>
       <MyComponent />
     </div>
   }

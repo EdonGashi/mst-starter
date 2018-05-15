@@ -1,4 +1,4 @@
-import createApp from 'createApp'
+import createApp from 'init/createApp'
 import createHistory from 'history/createMemoryHistory'
 import errorFormatter from 'error-formatter'
 
