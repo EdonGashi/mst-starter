@@ -3,7 +3,7 @@ import { fromPromise } from 'mobx-utils'
 import warning from 'utils/warning'
 import invariant from 'utils/invariant'
 
-export default function tracked(arg1, arg2, arg3, arg4) {
+export function tracked(arg1, arg2, arg3, arg4) {
   const len = arguments.length
   if (len === 1 && typeof arg1 === 'function') {
     return trackedFunction(arg1, true)

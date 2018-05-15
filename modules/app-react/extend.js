@@ -2,7 +2,6 @@ import React from 'react'
 import { inject } from 'mobx-react'
 import { hydrate } from 'app/tree'
 import hoistNonReactStatics from 'hoist-non-react-statics'
-import invariant from 'utils/invariant'
 
 function extendMany(extensions, env = {}) {
   return function (BaseComponent) {
@@ -18,7 +17,6 @@ function extendMany(extensions, env = {}) {
       constructor(props) {
         super(props)
         const { app } = props
-        invariant(app, 'App root not found in context. Make sure to add a context provider.')
         const len = extensions.length
         for (let i = 0; i < len; i++) {
           const { path, type, env: childEnv } = extensions[i]

@@ -3,7 +3,7 @@ import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import { tracked } from 'app'
 import { inject, extend } from 'app-react'
-import { isPromiseBasedObservable } from 'mobx-utils';
+import 'css/Home'
 
 class TodoService {
   @tracked getTodos() {
@@ -20,27 +20,31 @@ class HomeController {
     'service.todo': TodoService
   }
 
-  constructor(snapshot = {}) {
+  constructor(snapshot = {}, { service: { todo } }) {
     this.todos = snapshot.todos
+    this.todoService = todo
   }
 
-  @observable todos
+  @observable.ref todos
 
-  @tracked async onEnter() {
-    this.todos = await this.$app.service.todo.getTodos()
+  @tracked onEnter() {
+    this.todos = this.todoService.getTodos()
   }
 }
 
 @extend('controller.home', HomeController)
-@inject('controller.home')
+@inject('controller=controller.home')
+@observer
 export default class Home extends React.Component {
   constructor(props) {
     super(props)
-    props.home.onEnter()
+    console.log('constructing')
+    props.controller.onEnter()
   }
 
   render() {
-    const { todos } = this.props.home
+    const todos = this.props.controller.todos.value
+    console.log('render')
     return <div>
       {todos ? todos.join(', ') : 'No todos yet'}
     </div>

@@ -14,12 +14,12 @@
     },
     "node": {
       "presets": [
-        "react"
+        "react",
+        "stage-2"
       ],
       "plugins": [
         "universal-import",
         "transform-object-rest-spread",
-        "transform-class-properties",
         "transform-decorators-legacy"
       ]
     }

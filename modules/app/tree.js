@@ -68,7 +68,14 @@ export function getLeaves(node, arr = []) {
   return arr
 }
 
-/* eslint-enable indent */
+function setHidden(obj, prop, value) {
+  Object.defineProperty(obj, prop, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value
+  })
+}
 
 export function hydrate(appNode, path, type, env = {}) {
   invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got ${appNode} instead.`)
@@ -101,18 +108,13 @@ export function hydrate(appNode, path, type, env = {}) {
   if (typeof type.create === 'function') {
     result = type.create(snapshot, { app, env })
   } else if (typeof type === 'function') {
-    result = new type(snapshot, { app, env })
+    result = new type(snapshot, app, env)
   } else {
     invariant(false, `Invalid type provided for hydration in path '${path}'.`)
   }
 
   if (result && typeof result === 'object') {
-    Object.defineProperty(result, '$app', {
-      enumerable: false,
-      configurable: true,
-      writable: true,
-      value: app
-    })
+    setHidden(result, '$app', app)
   }
 
   initMiddleware(result, app)
@@ -159,11 +161,11 @@ export class AppNode {
   constructor(root, payload = {}) {
     if (!root) {
       root = this
-      this.__volatile = {}
-      this.__env = {}
+      setHidden(this, '__volatile', {})
+      setHidden(this, '__env', {})
     }
 
-    this.__root = root
+    setHidden(this, '__root', root)
     for (const key in payload) {
       if (key.indexOf('__STATE_') === 0) {
         this[key] = payload[key]

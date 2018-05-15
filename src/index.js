@@ -16,13 +16,13 @@ function render() {
 }
 
 if (process.env.NODE_ENV === 'development' && module.hot) {
-  module.hot.accept('init/App.js', function () {
-    CurrentView = require('init/App').default
+  module.hot.accept('./init/App.js', function () {
+    CurrentView = require('./init/App').default
     currentApp = createApp(serialize(currentApp))
     render()
   })
-  module.hot.accept('init/createApp.js', function () {
-    const createApp = require('init/createApp.js').default
+  module.hot.accept('./init/createApp.js', function () {
+    const createApp = require('./init/createApp.js').default
     currentApp = createApp(serialize(currentApp))
     render()
   })

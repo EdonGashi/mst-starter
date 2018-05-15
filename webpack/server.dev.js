@@ -31,7 +31,8 @@ module.exports = {
     __dirname: false,
     __filename: false
   },
-  devtool: 'source-map',
+  // devtool: 'source-map',
+  devtool: 'eval',
   entry: [entry],
   externals,
   output: {

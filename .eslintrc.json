@@ -117,6 +117,7 @@
     "no-var": 1,
     "prefer-const": 1,
     "rest-spread-spacing": 1,
-    "yield-star-spacing": 1
+    "yield-star-spacing": 1,
+    "react/prop-types": 1
   }
 }
