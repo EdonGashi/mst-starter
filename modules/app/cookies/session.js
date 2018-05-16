@@ -8,7 +8,7 @@ export class Session {
   @observable.ref _state = null
 
   constructor(payload, app, { name }) {
-    warning(!name.includes('__', 'Session names should not include double underscores.'))
+    warning(!name.includes('__'), 'Session names should not include double underscores.')
     name = encodeURIComponent(name).replace(/\./g, '__')
     this.app = app
     this._name = name
