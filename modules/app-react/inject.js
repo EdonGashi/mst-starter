@@ -3,7 +3,7 @@ import get from 'lodash/get'
 import toPath from 'lodash/toPath'
 
 function fromPaths(paths, useApp) {
-  return function (baseStores, nextProps) {
+  return function (stores, props) {
     paths.forEach(function (path) {
       const index = path.indexOf('=')
       let storeName
@@ -15,30 +15,42 @@ function fromPaths(paths, useApp) {
         path = path.substr(index + 1)
       }
 
-      if (storeName in nextProps) {
+      if (storeName in props) {
         return
       }
 
-      const object = get(useApp ? baseStores.app : baseStores, path)
-      if (object) {
-        nextProps[storeName] = object
+      const object = get(useApp ? stores.root.app : stores, path)
+      if (typeof object !== 'undefined') {
+        props[storeName] = object
       } else {
         throw new Error(`Could not find '${path}' in context.`)
       }
     })
 
-    return nextProps
+    return props
   }
-}
-
-export function inject(...stores) {
-  return mobxInject(fromPaths(stores, true))
 }
 
 export function injectContext(...stores) {
   return mobxInject(fromPaths(stores, false))
 }
 
+export function inject(...stores) {
+  return mobxInject(fromPaths(stores, true))
+}
+
+inject.volatile = function () {
+  return inject('volatile=__volatile')
+}
+
+inject.env = function () {
+  return inject('env=__env')
+}
+
 inject.app = function () {
-  return mobxInject('app')
+  return injectContext('root.app')
+}
+
+inject.root = function () {
+  return mobxInject('root')
 }

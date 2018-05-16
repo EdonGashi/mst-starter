@@ -1,8 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/server'
 import { serialize } from 'app'
-import AppRoot from 'init/App'
+import App from 'init/App'
+import { Provider } from 'mobx-react'
 import { ReportChunks } from 'react-universal-component'
+import { HelmetProvider } from 'react-helmet-async'
 import flushChunks, { filesFromChunks } from 'webpack-flush-chunks'
 import fs from 'fs'
 import path from 'path'
@@ -40,11 +42,15 @@ export default function render({ clientStats }) {
 
   return function (ctx) {
     const app = ctx.app
-
+    const helmetContext = {}
     let chunkNames = new Set()
     const domString = ReactDOM.renderToString(
       <ReportChunks report={chunkName => chunkNames.add(chunkName)}>
-        <AppRoot app={app} />
+        <HelmetProvider context={helmetContext}>
+          <Provider root={{ app }}>
+            <App app={app} />
+          </Provider>
+        </HelmetProvider>
       </ReportChunks>
     )
 
@@ -54,9 +60,9 @@ export default function render({ clientStats }) {
     // console.log('DYNAMIC CHUNK NAMES RENDERED', chunkNames)
     // console.log('SCRIPTS SERVED', scripts)
     // console.log('STYLESHEETS SERVED', stylesheets)
-
     const renderopts = ctx.render || {}
-    const { helmet } = app.__volatile.helmetContext
+    const { helmet } = helmetContext
+
     const bodyString = `<!DOCTYPE html>
 <html ${helmet.htmlAttributes.toString()}>
 <head>

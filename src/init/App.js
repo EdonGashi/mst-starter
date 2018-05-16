@@ -1,7 +1,6 @@
 import React from 'react'
-import Helmet, { HelmetProvider } from 'react-helmet-async'
-import { Provider } from 'mobx-react'
 import PropTypes from 'prop-types'
+import { Head, ServerOnly, ClientOnly, Render } from 'app-react'
 import 'css/App'
 
 export default class App extends React.Component {
@@ -11,15 +10,24 @@ export default class App extends React.Component {
 
   render() {
     return (
-      <Provider app={this.props.app}>
-        <HelmetProvider context={this.props.app.__volatile.helmetContext}>
-          <Helmet>
-            <meta charSet='utf8' />
-            <title>App</title>
-          </Helmet>
-          <div>TODO ROUTER</div>
-        </HelmetProvider>
-      </Provider>
+      <div>
+        <Head>
+          <meta charSet='utf8' />
+          <title>App</title>
+        </Head>
+        <ServerOnly>SERVER</ServerOnly>
+        <ClientOnly>CLIENT</ClientOnly>
+        <div>TODO ROUTER</div>
+        <Render>
+          {ctx => {
+            if (ctx.serverRender) {
+              return <div>SERVER RENDER</div>
+            } else {
+              return <div>CLIENT RENDER</div>
+            }
+          }}
+        </Render>
+      </div>
     )
   }
 }

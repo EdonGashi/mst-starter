@@ -6,7 +6,7 @@ let invariant = function (condition) {
   }
 }
 
-if (process.env.NODE_ENV !== 'production' || process.env.SERVER) {
+if (process.env.NODE_ENV !== 'production' || process.env.IS_SERVER) {
   invariant = function invariant(condition, message) {
     if (!message) {
       throw new Error('invariant requires a message argument.')

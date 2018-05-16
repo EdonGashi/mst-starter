@@ -1,5 +1,5 @@
 import React from 'react'
-import { inject } from 'mobx-react'
+import { inject } from './inject'
 import { hydrate } from 'app/tree'
 import hoistNonReactStatics from 'hoist-non-react-statics'
 
@@ -10,7 +10,7 @@ function extendMany(extensions, env = {}) {
       || BaseComponent.constructor && BaseComponent.constructor.name
       || 'Unknown'
 
-    @inject('app')
+    @inject.app()
     class ExtendedComponent extends React.Component {
       static displayName = `extend(${name})`
 

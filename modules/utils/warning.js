@@ -2,7 +2,7 @@
 
 let warning = function () { }
 
-if (process.env.NODE_ENV !== 'production' || process.env.SERVER) {
+if (process.env.NODE_ENV !== 'production' || process.env.IS_SERVER) {
   warning = function warning(condition, message) {
     if (!message) {
       throw new Error('warning requires a message argument.')

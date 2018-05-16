@@ -7,7 +7,7 @@ useStaticRendering(true)
 export default ({ clientStats }) => {
   return compose([
     init(),
-    // polyfill(),
+    ...(process.env.NODE_ENV === 'production' ? [polyfill()] : []),
     fiber(),
     render({ clientStats })
   ])
