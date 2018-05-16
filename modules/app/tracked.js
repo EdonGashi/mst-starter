@@ -1,4 +1,6 @@
+import Fiber from 'fibers'
 import { fromPromise } from 'mobx-utils'
+import warning from 'utils/warning'
 import invariant from 'utils/invariant'
 
 export function tracked(arg1, arg2, arg3, arg4) {
@@ -24,6 +26,11 @@ export function tracked(arg1, arg2, arg3, arg4) {
 
 function trackedFunction(wrap, fn) {
   return function asyncTracker() {
+    const app = this && this.$app
+    if (app && typeof app.__volatile.__asyncFrame !== 'number') {
+      app.__volatile.__asyncFrame = 0
+    }
+
     let promise
     try {
       promise = fn.apply(this, arguments)
@@ -35,7 +42,38 @@ function trackedFunction(wrap, fn) {
       return (wrap ? fromPromise : Promise).resolve(promise)
     }
 
-    return wrap ? fromPromise(promise) : promise
+    if (wrap) {
+      promise = fromPromise(promise)
+    }
+
+    if (!app) {
+      const fiber = Fiber.current
+      function run() {
+        fiber.run()
+      }
+
+      if (fiber) {
+        promise.then(run, run)
+        Fiber.yield()
+      }
+    } else {
+      const frame = ++app.__volatile.__asyncFrame
+      function onFinish() {
+        const newFrame = --app.__volatile.__asyncFrame
+        warning(newFrame >= 0, 'Mismatched flow pairs. This will cause invalid states and memory leaks.')
+        if (newFrame === 0) {
+          app.__volatile.__fiber.run()
+        }
+      }
+
+      promise.then(onFinish, onFinish)
+      if (frame === 1) {
+        invariant(Fiber.current && Fiber.current === app.__volatile.__fiber, 'An async flow has been initiated from outside a render frame.')
+        Fiber.yield()
+      }
+    }
+
+    return promise
   }
 }
 

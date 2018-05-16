@@ -2,7 +2,7 @@ import { encode, decode } from 'utils/string-encoding'
 import warning from 'utils/warning'
 import { observable } from 'mobx'
 import { withType } from '../initialize'
-import Cookies from 'js-cookie'
+import { getCookie, setCookie } from './cookie'
 
 export class Session {
   @observable.ref _state = null
@@ -12,22 +12,12 @@ export class Session {
     name = encodeURIComponent(name).replace(/\./g, '__')
     this.app = app
     this._name = name
-    if (process.env.NODE_ENV === 'development' && payload) {
+    if (process.env.IS_CLIENT && process.env.NODE_ENV === 'development' && payload) {
       this.set(payload)
       return
     }
 
-    const str = Cookies.get(name)
-    if (str) {
-      try {
-        this._state = decode(str)
-      } catch (err) {
-        warning(false, `Could not decode session string '${str}'.`)
-        this.set({})
-      }
-    } else {
-      this.set({})
-    }
+    this.refresh()
   }
 
   get() {
@@ -50,11 +40,22 @@ export class Session {
     }
 
     const value = encode(state)
-    Cookies.set(this._name, value, {
-      expires
-    })
-
+    setCookie(this.app, this._name, value, expires)
     this._state = state
+  }
+
+  refresh() {
+    const str = getCookie(this.app, this._name)
+    if (str) {
+      try {
+        this._state = decode(str)
+      } catch (err) {
+        warning(false, `Could not decode session string '${str}'.`)
+        this.set({})
+      }
+    } else {
+      this.set({})
+    }
   }
 
   clear() {

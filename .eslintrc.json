@@ -46,6 +46,7 @@
     "no-multi-spaces": 1,
     "no-throw-literal": 2,
     "no-with": 1,
+    "no-undef": 2,
     "require-await": 1,
     "yoda": 1,
     "no-shadow": 1,
