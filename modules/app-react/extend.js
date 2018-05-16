@@ -1,9 +1,9 @@
 import React from 'react'
 import { inject } from './inject'
-import { hydrate } from 'app/tree'
+import { resolve } from 'app/tree'
 import hoistNonReactStatics from 'hoist-non-react-statics'
 
-function extendMany(extensions, env = {}) {
+function extendMany(dependencies, env) {
   return function (BaseComponent) {
     const name = BaseComponent.displayName
       || BaseComponent.name
@@ -16,17 +16,7 @@ function extendMany(extensions, env = {}) {
 
       constructor(props) {
         super(props)
-        const { app } = props
-        const len = extensions.length
-        for (let i = 0; i < len; i++) {
-          const { path, type, env: childEnv } = extensions[i]
-          let mergedEnv = env
-          if (childEnv) {
-            mergedEnv = { ...env, ...childEnv }
-          }
-
-          hydrate(app, path, type, mergedEnv)
-        }
+        resolve(props.app, dependencies, env)
       }
 
       render() {
@@ -39,8 +29,12 @@ function extendMany(extensions, env = {}) {
   }
 }
 
-export function extend(path, type, env) {
-  return extendMany([{ path, type, env }])
-}
+export function extend(path, type, env = {}) {
+  if (typeof path === 'object') {
+    return extendMany(path, type)
+  }
 
-extend.many = extendMany
+  return extendMany({
+    [path]: type
+  }, env)
+}

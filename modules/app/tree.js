@@ -1,6 +1,6 @@
 import invariant from 'utils/invariant'
 import { toJS } from 'mobx'
-import { isStateTreeNode, isRoot, getSnapshot } from 'mobx-state-tree'
+import { isStateTreeNode, getSnapshot } from 'mobx-state-tree'
 
 function splitPath(path) {
   if (path instanceof Array) {
@@ -46,8 +46,17 @@ function createPath(appNode, path) {
 function initMiddleware(instance, app) {
   const middleware = app.__volatile.__middleware
   if (middleware) {
-    middleware.forEach(m => m(root, app))
+    middleware.forEach(m => m(instance, app))
   }
+}
+
+export function setHidden(obj, prop, value) {
+  Object.defineProperty(obj, prop, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value
+  })
 }
 
 export function getLeaves(node, arr = []) {
@@ -59,7 +68,7 @@ export function getLeaves(node, arr = []) {
         continue
       }
 
-      getLeaves(node[key])
+      getLeaves(node[key], arr)
     }
   } else if (node) {
     arr.push(node)
@@ -68,40 +77,28 @@ export function getLeaves(node, arr = []) {
   return arr
 }
 
-function setHidden(obj, prop, value) {
-  Object.defineProperty(obj, prop, {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value
-  })
+export function resolve(appNode, dependencies, env = {}) {
+  const app = appNode.__root
+  invariant(dependencies && typeof dependencies === 'object', 'Invalid dependencies object.')
+  for (const dependency in dependencies) {
+    let childType = dependencies[dependency]
+    let childEnv
+    if (Array.isArray(childType)) {
+      childEnv = childType[1] || {}
+      childEnv = { ...env, ...childEnv }
+      childType = childType[0]
+    } else {
+      childEnv = env
+    }
+
+    hydrate(app, dependency, childType, childEnv)
+  }
 }
 
-export function hydrate(appNode, path, type, env = {}) {
-  invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got ${appNode} instead.`)
-  invariant(type, `Invalid type provided for hydration in path '${path}'.`)
-  const { node, key } = createPath(appNode, path)
-  if (key in node) {
-    return node[key]
-  }
-
-  const snapshot = node['__STATE_' + key]
+export function construct(appNode, type, snapshot, env = {}) {
   const app = appNode.__root
   if (type.dependencies && typeof type.dependencies === 'object') {
-    const dependencies = type.dependencies
-    for (const dependency in dependencies) {
-      let childType = dependencies[dependency]
-      let childEnv
-      if (Array.isArray(childType)) {
-        childEnv = childType[1] || {}
-        childEnv = { ...env, ...childEnv }
-        childType = childType[0]
-      } else {
-        childEnv = env
-      }
-
-      hydrate(app, dependency, childType, childEnv)
-    }
+    resolve(app, type.dependencies, env)
   }
 
   let result
@@ -110,7 +107,7 @@ export function hydrate(appNode, path, type, env = {}) {
   } else if (typeof type === 'function') {
     result = new type(snapshot, app, env)
   } else {
-    invariant(false, `Invalid type provided for hydration in path '${path}'.`)
+    invariant(false, 'Invalid type provided for construction.')
   }
 
   if (result && typeof result === 'object') {
@@ -118,6 +115,19 @@ export function hydrate(appNode, path, type, env = {}) {
   }
 
   initMiddleware(result, app)
+  return result
+}
+
+export function hydrate(appNode, path, type, env) {
+  invariant(appNode instanceof AppNode, `Item being hydrated must be an AppNode, got '${appNode}' instead.`)
+  invariant(type, `Invalid type provided for hydration in path '${path}'.`)
+  const { node, key } = createPath(appNode, path)
+  if (key in node) {
+    return node[key]
+  }
+
+  const app = appNode.__root
+  const result = construct(app, type, node['__STATE_' + key], env)
   node[key] = result
   node['__STATE_' + key] = null
   return result
@@ -145,7 +155,7 @@ export function serialize(appNode) {
       continue
     }
 
-    if (isStateTreeNode(value) && isRoot(value)) {
+    if (isStateTreeNode(value)) {
       result['__STATE_' + key] = getSnapshot(value)
     } else if (typeof value.toJSON === 'function') {
       result['__STATE_' + key] = value.toJSON()

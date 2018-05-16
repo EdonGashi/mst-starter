@@ -1,7 +1,7 @@
 import { observable } from 'mobx'
-import { withType } from './initialize'
+import { withType } from '../initialize'
 
-export function withMap(initialState = {}, name = 'state', deep = false) {
+export function withMap(name = 'state', initialState = {}, deep = false) {
   return withType(name, {
     create(snapshot = {}) {
       return observable.map(

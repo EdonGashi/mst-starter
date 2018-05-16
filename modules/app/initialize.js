@@ -1,8 +1,8 @@
-import { AppNode, hydrate } from './tree'
+import { AppNode, hydrate, setHidden } from './tree'
 import invariant from 'utils/invariant'
 
 export function createAppFactory(...initializers) {
-  return function app(initialState = {}, volatileState = {}, envState = {}) {
+  return function app(initialState, volatileState, envState) {
     const root = new AppNode(null, initialState, volatileState, envState)
     initializers.forEach(initializer => initializer(root))
     return root
@@ -10,7 +10,7 @@ export function createAppFactory(...initializers) {
 }
 
 export function extendAppFactory(factory, ...initializers) {
-  return function (initialState = {}) {
+  return function (initialState) {
     extend(factory(initialState), ...initializers)
   }
 }
@@ -37,22 +37,31 @@ export function withMiddleware(...middleware) {
   }
 }
 
-export function withEnv(env = {}) {
+function assign(path, param) {
+  if (typeof param === 'object') {
+    param = { ...param }
+  }
+
   return function (app) {
-    const appEnv = app.__env
-    for (const key in env) {
-      appEnv[key] = env[key]
+    const arg = typeof param === 'function'
+      ? param(app)
+      : param
+
+    if (typeof arg === 'object') {
+      const target = app[path]
+      for (const key in arg) {
+        target[key] = param[key]
+      }
     }
   }
 }
 
-export function withVolatile(volatileState = {}) {
-  return function (app) {
-    const volatile = app.__volatile
-    for (const key in volatileState) {
-      volatile[key] = volatileState[key]
-    }
-  }
+export function withEnv(env) {
+  return assign('__env', env)
+}
+
+export function withVolatile(state) {
+  return assign('__volatile', state)
 }
 
 export function withGetter(name, getter) {
@@ -63,5 +72,11 @@ export function withGetter(name, getter) {
       configurable: true,
       get: getter
     })
+  }
+}
+
+export function withFunction(name, func) {
+  return function (app) {
+    setHidden(app, name, func.bind(app))
   }
 }
