@@ -7,9 +7,11 @@ export class Session {
   @observable.ref _state = null
 
   constructor(payload, app, { name }) {
+    warning(!name.includes('__', 'Session names should not include double underscores.'))
+    name = encodeURIComponent(name).replace(/\./g, '__')
     this.app = app
-    this.name = name.replace('.')
-    const str = app.__volatile.__ctx.cookies.get('session')
+    this._name = name
+    const str = app.__volatile.__ctx.cookies.get(name)
     if (str) {
       try {
         this._state = decode(str)
@@ -42,7 +44,7 @@ export class Session {
     }
 
     const value = encode(state)
-    this.app.__volatile.__ctx.cookies.set('session', value, {
+    this.app.__volatile.__ctx.cookies.set(this._name, value, {
       httpOnly: false,
       overwrite: true,
       expires
@@ -65,5 +67,5 @@ export class Session {
 }
 
 export function withCookieSession(name = 'session') {
-  return withType(name, Session)
+  return withType(name, Session, { name })
 }

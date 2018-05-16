@@ -8,14 +8,16 @@ export class Session {
   @observable.ref _state = null
 
   constructor(payload, app, { name }) {
+    warning(!name.includes('__', 'Session names should not include double underscores.'))
+    name = encodeURIComponent(name).replace(/\./g, '__')
     this.app = app
-    this.name = name
+    this._name = name
     if (process.env.NODE_ENV === 'development' && payload) {
       this.set(payload)
       return
     }
 
-    const str = Cookies.get('session')
+    const str = Cookies.get(name)
     if (str) {
       try {
         this._state = decode(str)
@@ -48,7 +50,7 @@ export class Session {
     }
 
     const value = encode(state)
-    Cookies.set('session', value, {
+    Cookies.set(this._name, value, {
       expires
     })
 
@@ -69,5 +71,5 @@ export class Session {
 }
 
 export function withCookieSession(name = 'session') {
-  return withType(name, Session)
+  return withType(name, Session, { name })
 }
