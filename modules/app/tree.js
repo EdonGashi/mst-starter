@@ -158,11 +158,11 @@ export function serialize(appNode) {
 }
 
 export class AppNode {
-  constructor(root, payload = {}) {
+  constructor(root, payload = {}, volatileState = {}, envState = {}) {
     if (!root) {
       root = this
-      setHidden(this, '__volatile', {})
-      setHidden(this, '__env', {})
+      setHidden(this, '__volatile', { ...volatileState })
+      setHidden(this, '__env', { ...envState })
     }
 
     setHidden(this, '__root', root)

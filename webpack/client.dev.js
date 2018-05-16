@@ -52,7 +52,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules', '../modules', '../src'],
-    extensions: ['.client.js', '.js', '.scss', '.css']
+    extensions: ['.js', '.scss', '.css']
   },
   plugins: [
     new CaseSensitivePathsPlugin(),

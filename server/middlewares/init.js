@@ -10,8 +10,10 @@ export default function init() {
     }
 
     const history = createHistory({ initialEntries: [ctx.path] })
-    const app = createApp()
-    app.__volatile.__ctx = ctx
+    const app = createApp(null, {
+      __ctx: ctx
+    })
+
     ctx.app = app
     try {
       await next()

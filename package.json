@@ -27,6 +27,7 @@
     "hi-base32": "^0.5.0",
     "history": "^4.7.2",
     "hoist-non-react-statics": "^2.5.0",
+    "js-cookie": "^2.2.0",
     "koa": "^2.5.1",
     "koa-better-body": "^3.0.4",
     "koa-compose": "^4.0.0",

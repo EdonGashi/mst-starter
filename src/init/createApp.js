@@ -1,4 +1,6 @@
-import { createAppFactory, withState, withVolatile } from 'app'
+import { createAppFactory, withCookieSession } from 'app'
 import routes from 'init/routes'
 
-export default createAppFactory()
+export default createAppFactory(
+  withCookieSession()
+)

@@ -2,8 +2,8 @@ import { AppNode, hydrate } from './tree'
 import invariant from 'utils/invariant'
 
 export function createAppFactory(...initializers) {
-  return function app(initialState = {}) {
-    const root = new AppNode(null, initialState)
+  return function app(initialState = {}, volatileState = {}, envState = {}) {
+    const root = new AppNode(null, initialState, volatileState, envState)
     initializers.forEach(initializer => initializer(root))
     return root
   }

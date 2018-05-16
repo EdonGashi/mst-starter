@@ -17,7 +17,7 @@ export default class App extends React.Component {
         </Head>
         <ServerOnly>SERVER</ServerOnly>
         <ClientOnly>CLIENT</ClientOnly>
-        <div>TODO ROUTER</div>
+        <div>{JSON.stringify(this.props.app.session.get())}</div>
         <Render>
           {ctx => {
             if (ctx.serverRender) {
