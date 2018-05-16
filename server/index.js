@@ -18,7 +18,7 @@ function done() {
 }
 
 if (DEV) {
-  const { devMiddleware, hotMiddleware, hotServerMiddleware } = require('./middlewares/hot-middlewares')
+  const { devMiddleware, hotMiddleware, hotServerMiddleware } = require('./dev')
   const clientConfig = require('../webpack/client.dev')
   const serverConfig = require('../webpack/server.dev')
   const { publicPath } = clientConfig.output
@@ -29,7 +29,6 @@ if (DEV) {
   app.use(devMiddleware(compiler, options))
   app.use(hotMiddleware(clientCompiler))
   app.use(hotServerMiddleware(compiler))
-
   compiler.plugin('done', done)
 } else {
   const serve = require('koa-static')
