@@ -8,6 +8,10 @@ import favicon from 'koa-favicon'
 import path from 'path'
 import fs from 'fs'
 
+function here(file) {
+  return path.join(__dirname, file)
+}
+
 const prod = process.env.NODE_ENV === 'production'
 
 function compose(...middleware) {
@@ -18,9 +22,9 @@ const handler = ({ clientStats, publicPath }) => {
   return compose(
     helmet(),
     prod && enforceHttps({}),
-    favicon(path.join(__dirname, '../assets/favicon.png')),
-    mount('/assets', serve(path.join(__dirname, '../assets'))),
-    prod && mount(publicPath, serve(path.join(__dirname, '../build-client'))),
+    favicon(here('../assets/favicon.png')),
+    mount('/assets', serve(here('../assets'))),
+    prod && mount(publicPath, serve(here('../build-client'))),
     init(),
     prod && polyfill(),
     fiber(),
@@ -31,10 +35,6 @@ const handler = ({ clientStats, publicPath }) => {
 export default handler
 
 if (prod && !global.IS_BUILD) {
-  function here(file) {
-    return path.join(__dirname, file)
-  }
-
   const Koa = require('koa')
   const http = require('http')
   const https = require('https')
