@@ -10,14 +10,15 @@ export function createAppFactory(...initializers) {
 }
 
 export function extendAppFactory(factory, ...initializers) {
-  return function (initialState) {
-    extend(factory(initialState), ...initializers)
+  return function (...args) {
+    return extend(factory(...args), ...initializers)
   }
 }
 
 export function extend(app, ...initializers) {
   app = app.__root
   initializers.forEach(initializer => initializer(app))
+  return app
 }
 
 export function withType(path, type, env) {

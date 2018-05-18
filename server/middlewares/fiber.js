@@ -3,7 +3,7 @@ import Fiber from 'fibers'
 export default function fiber() {
   return function (ctx, next) {
     return new Promise(function (resolve, reject) {
-      const currentFiber = Fiber(function () {
+      ctx.fiber = Fiber(function () {
         const current = Fiber.current
         next()
           .then(result => {
@@ -17,8 +17,7 @@ export default function fiber() {
         Fiber.yield()
       })
 
-      ctx.app.__volatile.__fiber = currentFiber
-      currentFiber.run()
+      ctx.fiber.run()
     })
   }
 }

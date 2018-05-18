@@ -47,6 +47,7 @@
     "pem": "^1.12.5",
     "polyfill-service": "^3.25.1",
     "prop-types": "^15.6.1",
+    "qs": "^6.5.2",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-helmet-async": "^0.1.0",

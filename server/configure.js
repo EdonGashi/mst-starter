@@ -25,9 +25,9 @@ const handler = ({ clientStats, publicPath }) => {
     favicon(here('../assets/favicon.png')),
     mount('/assets', serve(here('../assets'))),
     prod && mount(publicPath, serve(here('../build-client'))),
+    fiber(),
     init(),
     prod && polyfill(),
-    fiber(),
     render({ clientStats })
   )
 }

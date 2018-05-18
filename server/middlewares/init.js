@@ -1,5 +1,4 @@
 import createApp from 'init/createApp'
-import createHistory from 'history/createMemoryHistory'
 import errorFormatter from 'error-formatter'
 
 export default function init() {
@@ -9,9 +8,9 @@ export default function init() {
       scripts: []
     }
 
-    const history = createHistory({ initialEntries: [ctx.path] })
     const app = createApp(null, {
-      __ctx: ctx
+      __ctx: ctx,
+      __fiber: ctx.fiber
     })
 
     ctx.app = app
