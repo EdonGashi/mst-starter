@@ -1,4 +1,4 @@
-import compose from 'koa-compose'
+import koaCompose from 'koa-compose'
 import { init, fiber, polyfill, render } from './middlewares'
 import helmet from 'koa-helmet'
 import enforceHttps from 'koa-sslify'
@@ -10,18 +10,22 @@ import fs from 'fs'
 
 const prod = process.env.NODE_ENV === 'production'
 
+function compose(...middleware) {
+  return koaCompose(middleware.filter(m => !!m))
+}
+
 const handler = ({ clientStats, publicPath }) => {
-  return compose([
+  return compose(
     helmet(),
-    ...prod ? [enforceHttps({})] : [],
+    prod && enforceHttps({}),
     favicon(path.join(__dirname, '../assets/favicon.png')),
     mount('/assets', serve(path.join(__dirname, '../assets'))),
-    ...prod ? [mount(publicPath, serve(path.join(__dirname, '../build-client')))] : [],
+    prod && mount(publicPath, serve(path.join(__dirname, '../build-client'))),
     init(),
-    ...prod ? [polyfill()] : [],
+    prod && polyfill(),
     fiber(),
     render({ clientStats })
-  ])
+  )
 }
 
 export default handler
