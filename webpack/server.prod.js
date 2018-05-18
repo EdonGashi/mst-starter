@@ -6,7 +6,7 @@ const nodeExternals = require('webpack-node-externals')
 const res = p => path.resolve(__dirname, p)
 
 const entry = res('../server/configure.js')
-const output = res('../buildServer')
+const output = res('../build-server')
 
 module.exports = {
   name: 'server',
@@ -65,8 +65,6 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify('production'),
-        CLIENT_ROOT: JSON.stringify(res('../buildClient')),
-        SERVER_ROOT: JSON.stringify(res('../buildServer')),
         IS_SERVER: JSON.stringify(true),
         IS_CLIENT: JSON.stringify(false)
       }

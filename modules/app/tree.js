@@ -127,7 +127,12 @@ export function hydrate(appNode, path, type, env) {
   }
 
   const app = appNode.__root
-  const result = construct(app, type, node['__STATE_' + key], env)
+  let snapshot = node['__STATE_' + key]
+  if (typeof snapshot === 'undefined') {
+    snapshot = null
+  }
+
+  const result = construct(app, type, snapshot, env)
   node[key] = result
   node['__STATE_' + key] = null
   return result
@@ -155,12 +160,17 @@ export function serialize(appNode) {
       continue
     }
 
+    let snapshot
     if (isStateTreeNode(value)) {
-      result['__STATE_' + key] = getSnapshot(value)
+      snapshot = getSnapshot(value)
     } else if (typeof value.toJSON === 'function') {
-      result['__STATE_' + key] = value.toJSON()
+      snapshot = value.toJSON()
     } else {
-      result['__STATE_' + key] = toJS(value)
+      snapshot = toJS(value)
+    }
+
+    if (snapshot !== undefined && snapshot !== null) {
+      result['__STATE_' + key] = snapshot
     }
   }
 

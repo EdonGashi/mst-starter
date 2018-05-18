@@ -2,16 +2,18 @@ import React from 'react'
 import ReactDOM from 'react-dom/server'
 import { serialize } from 'app'
 import App from 'init/App'
-import { Provider } from 'mobx-react'
+import { Provider, useStaticRendering } from 'mobx-react'
 import { ReportChunks } from 'react-universal-component'
 import { HelmetProvider } from 'react-helmet-async'
 import flushChunks, { filesFromChunks } from 'webpack-flush-chunks'
 import fs from 'fs'
 import path from 'path'
 
+useStaticRendering(true)
+
 function readBootstrap(manifestName) {
   const bootstrap = fs
-    .readFileSync(path.join(process.env.CLIENT_ROOT, manifestName), 'utf8')
+    .readFileSync(path.join(__dirname, '../build-client', manifestName), 'utf8')
     .replace('//# sourceMappingURL=bootstrap.', '//# sourceMappingURL=/static/bootstrap.')
   return bootstrap
 }

@@ -8,7 +8,7 @@ const res = p => path.resolve(__dirname, p)
 
 const nodeModules = res('../node_modules')
 const entry = res('../server/configure.js')
-const output = res('../buildServer')
+const output = res('../build-server')
 
 // if you're specifying externals to leave unbundled, you need to tell Webpack
 // to still bundle `react-universal-component`, `webpack-flush-chunks` and
@@ -83,8 +83,6 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
-        CLIENT_ROOT: JSON.stringify(res('../buildClient')),
-        SERVER_ROOT: JSON.stringify(res('../buildServer')),
         IS_SERVER: JSON.stringify(true),
         IS_CLIENT: JSON.stringify(false)
       }

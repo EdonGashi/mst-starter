@@ -58,8 +58,8 @@ typings/
 .env
 
 # build Output
-buildClient
-buildServer
+build-client
+build-server
 
 # temporarily disable package lock
 package-lock.json
