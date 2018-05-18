@@ -6,6 +6,7 @@ export function getCookie(app, name) {
 
 export function setCookie(app, name, value, expires) {
   Cookies.set(name, value, {
-    expires
+    expires,
+    SameSite: 'lax'
   })
 }

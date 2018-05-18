@@ -4,7 +4,7 @@ import { observable } from 'mobx'
 import { withType } from '../initialize'
 import { getCookie, setCookie } from './cookie'
 
-export class Session {
+export class CookieSession {
   @observable.ref _state = null
 
   constructor(payload, app, { name }) {
@@ -72,5 +72,5 @@ export class Session {
 }
 
 export function withCookieSession(name = 'session') {
-  return withType(name, Session, { name })
+  return withType(name, CookieSession, { name })
 }

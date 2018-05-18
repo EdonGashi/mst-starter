@@ -6,6 +6,7 @@ export function setCookie(app, name, value, expires) {
   app.__volatile.__ctx.cookies.set(name, value, {
     httpOnly: false,
     overwrite: true,
-    expires
+    expires,
+    sameSite: 'lax'
   })
 }

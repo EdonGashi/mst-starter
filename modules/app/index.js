@@ -1,6 +1,6 @@
 export * from './initialize'
 export * from './tree'
-export * from './cookie-session/session'
+export * from './cookie-session/CookieSession'
 export * from './utils/tracked'
 export * from './utils/withMap'
 export * from './utils/withConstruct'
