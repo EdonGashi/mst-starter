@@ -21,6 +21,10 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 function render() {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Rendering app...')
+  }
+
   root.app = currentApp
   window.__APP__ = root.app
   ReactDOM.hydrate(
@@ -33,17 +37,20 @@ function render() {
   )
 
   root.app.__volatile.initialRender = false
+  if (process.env.NODE_ENV === 'development') {
+    console.log('App render complete...')
+  }
 }
 
 if (process.env.NODE_ENV === 'development' && module.hot) {
   module.hot.accept('./init/App.js', function () {
     CurrentApp = require('./init/App').default
-    currentApp = createApp(serialize(currentApp))
+    currentApp = createApp(serialize(currentApp, 'hot'))
     render()
   })
   module.hot.accept('./init/createApp.js', function () {
     const createApp = require('./init/createApp.js').default
-    currentApp = createApp(serialize(currentApp))
+    currentApp = createApp(serialize(currentApp, 'hot'))
     render()
   })
 }

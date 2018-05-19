@@ -81,3 +81,15 @@ export function getLocation(location) {
     isValidState
   }
 }
+
+export function getProps(app, props, clone = true) {
+  if (props && typeof props === 'object') {
+    return clone ? { ...props } : props
+  }
+
+  if (typeof props === 'function') {
+    return props(app)
+  }
+
+  return {}
+}

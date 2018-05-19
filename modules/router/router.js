@@ -1,19 +1,7 @@
-import { getLocation, transformLocation } from './utils'
+import { getLocation, transformLocation, getProps } from './utils'
 import warning from 'utils/warning'
 import { observable } from 'mobx'
-import { resolve, tracked } from 'app'
-
-function getProps(app, props) {
-  if (typeof props === 'object') {
-    return props
-  }
-
-  if (typeof props === 'function') {
-    return props(app)
-  }
-
-  return {}
-}
+import { resolveDependencies, tracked } from 'app'
 
 function once(fn) {
   let called = false
@@ -36,16 +24,16 @@ export class Router {
     return this.routeProps.route.route
   }
 
-  @tracked(false) async _beforeUpdate(location, action, callback) {
+  @tracked(false) async _beforeUpdate(location, action, callback, forceShallow = false) {
     if (this._locked) {
       return callback(false)
     }
 
     this._locked = true
     const origCallback = callback
-    callback = (decision) => {
+    callback = (decision, willRedirect = false) => {
       this._locked = false
-      origCallback(decision)
+      origCallback(decision, willRedirect)
     }
 
     const next = this._routes.match(location.pathname)
@@ -61,7 +49,7 @@ export class Router {
       action: action,
       location: getLocation(location),
       match,
-      shallow: route === this._currentRoute,
+      shallow: forceShallow || route === this._currentRoute,
       route,
       app: this._app
     }
@@ -102,7 +90,7 @@ export class Router {
         return callback(true)
       }
 
-      callback(false)
+      callback(false, true)
       if (action === 'PUSH') {
         this.push(result)
       } else {
@@ -121,11 +109,12 @@ export class Router {
     const oldProps = this.routeProps
     const app = this._app
     const { route, match } = next
+    const shallow = forceShallow || route === this._currentRoute
     const routeParam = {
       action: action,
       location: getLocation(location),
       match,
-      shallow: forceShallow || route === this._currentRoute,
+      shallow,
       route
     }
 
@@ -147,18 +136,29 @@ export class Router {
     if (process.env.IS_SERVER) {
       const component = route.component
       if (component.dependencies && typeof component.dependencies === 'object') {
-        resolve(app, component.dependencies)
+        resolveDependencies(app, component.dependencies)
       }
 
-      if (typeof component.onEnter === 'function') {
+      const func = shallow ? component.onShallowEnter : component.onEnter
+      if (typeof func === 'function') {
         try {
-          await component.onEnter(props, app)
+          await func.call(null, props, app)
         } catch (err) {
           props.error = true
           console.error(err)
+        } finally {
+          props.loading = false
         }
       }
     } else {
+      try {
+        route.component.preloadWeak()
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(err)
+        }
+      }
+
       const isSync = 'dependencies' in route.component
       if (isSync) {
         if (process.env.NODE_ENV === 'development') {
@@ -167,26 +167,39 @@ export class Router {
 
         const component = route.component
         if (component.dependencies && typeof component.dependencies === 'object') {
-          resolve(app, component.dependencies)
+          resolveDependencies(app, component.dependencies)
         }
 
-        if (typeof component.onEnter === 'function') {
+        const func = shallow ? component.onShallowEnter : component.onEnter
+        if (typeof func === 'function') {
           let promise
           try {
-            promise = component.onEnter(props, app)
+            promise = func.call(null, props, app)
           } catch (err) {
             props.error = err
           }
 
           if (promise && promise.then) {
-            promise.catch(err => {
-              if (this.routeProps === props) {
-                this.routeProps = {
-                  ...props,
-                  error: err
+            promise.then(
+              () => {
+                if (this.routeProps === props && props.loading) {
+                  this.routeProps = {
+                    ...props,
+                    loading: false
+                  }
                 }
-              }
-            })
+              },
+              err => {
+                if (this.routeProps === props) {
+                  this.routeProps = {
+                    ...props,
+                    error: err,
+                    loading: false
+                  }
+                }
+              })
+          } else {
+            props.loading = false
           }
         }
       } else {
@@ -203,20 +216,24 @@ export class Router {
 
             const newProps = { ...props }
             if (component.dependencies && typeof component.dependencies === 'object') {
-              resolve(app, component.dependencies)
+              resolveDependencies(app, component.dependencies)
             }
 
-            if (typeof component.onEnter === 'function') {
+            let rerender = false
+            const func = shallow ? component.onShallowEnter : component.onEnter
+            if (typeof func === 'function') {
               try {
-                await component.onEnter(newProps, app)
-              } catch (err) {
-                newProps.error = err
-              } finally {
+                await func.call(null, newProps, app)
                 newProps.loading = false
+                rerender = this.routeProps === props && props.loading
+              } catch (err) {
+                newProps.loading = false
+                newProps.error = err
+                rerender = this.routeProps === props
               }
             }
 
-            if (this.routeProps === props) {
+            if (rerender) {
               this.routeProps = newProps
             }
           }, 0)
@@ -239,7 +256,7 @@ export class Router {
     let nextLocation = null
     let nextAction = null
     const history = createHistory({
-      ...getProps(app, historyProps),
+      ...getProps(app, historyProps, false),
       getUserConfirmation: (message, callback) =>
         this._beforeUpdate(nextLocation, nextAction, callback)
     })
@@ -256,32 +273,65 @@ export class Router {
     this._unlisten = history.listen((location, action) => this._onUpdate(location, action))
   }
 
-  refresh(action = 'REPLACE', shallow = false) {
-    this._onUpdate({ ...this._history.location }, action, shallow)
+  @tracked(false) refresh(action = 'REPLACE', forceShallow = false) {
+    const location = { ...this._history.location }
+    return new Promise((resolve, reject) => {
+      this._beforeUpdate(location, action, (decision, willRedirect) => {
+        if (!decision) {
+          if (process.env.IS_SERVER && !willRedirect) {
+            this._app.__volatile.__forbidden()
+          }
+
+          return resolve()
+        }
+
+        this._onUpdate(location, action, forceShallow).then(resolve, reject)
+      }, forceShallow)
+    })
   }
 
   push(path) {
+    if (process.env.IS_SERVER) {
+      return this._app.__volatile.__redirect(transformLocation(path))
+    }
+
     this._history.push(transformLocation(path))
   }
 
   replace(path) {
+    if (process.env.IS_SERVER) {
+      return this._app.__volatile.__redirect(transformLocation(path))
+    }
+
     this._history.replace(transformLocation(path))
   }
 
   go(n) {
+    if (process.env.IS_SERVER) {
+      throw new Error('Cannot perform this action server-side.')
+    }
+
     this._history.go(n)
   }
 
   goBack() {
+    if (process.env.IS_SERVER) {
+      throw new Error('Cannot perform this action server-side.')
+    }
+
     this._history.goBack()
   }
 
   goForward() {
+    if (process.env.IS_SERVER) {
+      throw new Error('Cannot perform this action server-side.')
+    }
+
     this._history.goForward()
   }
 
-  toJSON() {
-    if (process.env.NODE_ENV === 'development') {
+  toJSON(flag) {
+    if (process.env.NODE_ENV === 'development' && flag === 'hot') {
       this._unblock()
       this._unlisten()
     }

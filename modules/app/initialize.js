@@ -21,10 +21,16 @@ export function extend(app, ...initializers) {
   return app
 }
 
+export function compose(...initializers) {
+  return function (app) {
+    initializers.forEach(initializer => initializer(app))
+  }
+}
+
 export function withType(path, type, env) {
   invariant(type, 'Invalid leaf argument. Accepts only functions and mst types.')
   return function (app) {
-    hydrate(app, path, type, env)
+    return hydrate(app, path, type, env)
   }
 }
 

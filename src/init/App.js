@@ -16,11 +16,10 @@ export default class App extends React.Component {
           <meta charSet='utf8' />
           <title>App</title>
         </Head>
-        <ServerOnly>SERVER</ServerOnly>
-        <ClientOnly>CLIENT</ClientOnly>
         <div>{JSON.stringify(this.props.app.session.get())}</div>
         <Observer>
           {() => {
+            console.log('Router rendering...')
             const routeProps = this.props.app.router.routeProps
             if (!routeProps) {
               return null
@@ -29,15 +28,6 @@ export default class App extends React.Component {
             return <routeProps.route.route.component {...routeProps} />
           }}
         </Observer>
-        <Render>
-          {ctx => {
-            if (ctx.serverRender) {
-              return <div>SERVER RENDER</div>
-            } else {
-              return <div>CLIENT RENDER</div>
-            }
-          }}
-        </Render>
       </div>
     )
   }

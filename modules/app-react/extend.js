@@ -1,6 +1,6 @@
 import React from 'react'
 import { inject } from './inject'
-import { resolve } from 'app/tree'
+import { resolveDependencies } from 'app/tree'
 import hoistNonReactStatics from 'hoist-non-react-statics'
 
 function extendMany(dependencies, env) {
@@ -16,7 +16,7 @@ function extendMany(dependencies, env) {
 
       constructor(props) {
         super(props)
-        resolve(props.app, dependencies, env)
+        resolveDependencies(props.app, dependencies, env)
       }
 
       render() {

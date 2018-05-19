@@ -77,7 +77,7 @@ export function getLeaves(node, arr = []) {
   return arr
 }
 
-export function resolve(appNode, dependencies, env = {}) {
+export function resolveDependencies(appNode, dependencies, env = {}) {
   const app = appNode.__root
   invariant(dependencies && typeof dependencies === 'object', 'Invalid dependencies object.')
   for (const dependency in dependencies) {
@@ -98,7 +98,7 @@ export function resolve(appNode, dependencies, env = {}) {
 export function construct(appNode, type, snapshot, env = {}) {
   const app = appNode.__root
   if (type.dependencies && typeof type.dependencies === 'object') {
-    resolve(app, type.dependencies, env)
+    resolveDependencies(app, type.dependencies, env)
   }
 
   let result
@@ -138,7 +138,7 @@ export function hydrate(appNode, path, type, env) {
   return result
 }
 
-export function serialize(appNode) {
+export function serialize(appNode, flag = null) {
   invariant(appNode instanceof AppNode, 'Item being serialized must be an AppNode.')
   const result = {}
   for (const key in appNode) {
@@ -164,7 +164,7 @@ export function serialize(appNode) {
     if (isStateTreeNode(value)) {
       snapshot = getSnapshot(value)
     } else if (typeof value.toJSON === 'function') {
-      snapshot = value.toJSON()
+      snapshot = value.toJSON(flag)
     } else {
       snapshot = toJS(value)
     }

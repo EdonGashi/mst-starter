@@ -36,6 +36,10 @@ export function transformRoutes(routesObject) {
       const opts = { ...options, ...routeOptions }
       opts.onLoad = onLoad(opts)
       route.component = universal(route.view, opts)
+      if (process.env.IS_SERVER) {
+        route.component.preloadWeak()
+      }
+
       if (route.id) {
         named[route.id] = route
       }
@@ -68,7 +72,8 @@ export function transformRoutes(routesObject) {
           component: route.component,
           props: route.props,
           path: str,
-          exact: !route.nonExact
+          exact: !route.nonExact,
+          beforeEnter: route.beforeEnter || routesObject.beforeEnter
         })
       })
     }
