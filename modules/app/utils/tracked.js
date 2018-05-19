@@ -35,6 +35,10 @@ function trackedFunction(wrap, fn) {
     try {
       promise = fn.apply(this, arguments)
     } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(err)
+      }
+
       return (wrap ? fromPromise : Promise).reject(err)
     }
 
@@ -48,16 +52,36 @@ function trackedFunction(wrap, fn) {
 
     if (!app) {
       const fiber = Fiber.current
+      function error(err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(err)
+        }
+
+        fiber.run()
+      }
+
       function run() {
         fiber.run()
       }
 
       if (fiber) {
-        promise.then(run, run)
+        promise.then(run, error)
         Fiber.yield()
       }
     } else {
       const frame = ++app.__volatile.__asyncFrame
+      function onFinishError(err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(err)
+        }
+
+        const newFrame = --app.__volatile.__asyncFrame
+        warning(newFrame >= 0, 'Mismatched flow pairs. This will cause invalid states and memory leaks.')
+        if (newFrame === 0) {
+          app.__volatile.__fiber.run()
+        }
+      }
+
       function onFinish() {
         const newFrame = --app.__volatile.__asyncFrame
         warning(newFrame >= 0, 'Mismatched flow pairs. This will cause invalid states and memory leaks.')
@@ -66,7 +90,7 @@ function trackedFunction(wrap, fn) {
         }
       }
 
-      promise.then(onFinish, onFinish)
+      promise.then(onFinish, onFinishError)
       if (frame === 1) {
         invariant(Fiber.current && Fiber.current === app.__volatile.__fiber, 'An async flow has been initiated from outside a render frame.')
         Fiber.yield()

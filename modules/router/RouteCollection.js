@@ -63,7 +63,8 @@ export function transformRoutes(routesObject) {
         component: route.component,
         props: route.props,
         path,
-        exact: !route.nonExact
+        exact: !route.nonExact,
+        beforeEnter: route.beforeEnter || routesObject.beforeEnter
       })
     } else {
       path.forEach(str => {

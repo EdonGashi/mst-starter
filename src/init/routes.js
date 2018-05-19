@@ -5,19 +5,16 @@ export default {
   props: {
 
   },
-  beforeEnter({ route }) {
-    console.log('Before enter', route)
-  },
   routes: [
     {
       path: ['/', '/home'],
-      view: () => import('./Home'),
+      view: () => import(/* webpackChunkName: 'pages/home/Home' */ '../pages/home/Home'),
       options: {},
       props: {}
     },
     {
-      path: ['/about'],
-      view: () => import('./About'),
+      path: '/about',
+      view: () => import(/* webpackChunkName: 'pages/about/About' */ '../pages/about/About'),
       options: {},
       props: {}
     }

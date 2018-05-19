@@ -97,6 +97,8 @@ export class Router {
         this.replace(result)
       }
     }
+
+    callback(true)
   }
 
   @tracked(false) async _onUpdate(location, action, forceShallow = false) {
@@ -162,7 +164,7 @@ export class Router {
       const isSync = 'dependencies' in route.component
       if (isSync) {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Sync rendering...', props)
+          console.log('Sync loading...', props)
         }
 
         const component = route.component
@@ -211,7 +213,7 @@ export class Router {
             }
 
             if (process.env.NODE_ENV === 'development') {
-              console.log('Async rendering...', props)
+              console.log('Async loading...', props)
             }
 
             const newProps = { ...props }

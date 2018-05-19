@@ -15,22 +15,30 @@ export default function init() {
       scripts: []
     }
 
-    let isRedirected = false
+    let responseSent = false
     function redirect(location) {
-      if (!isRedirected) {
+      if (!responseSent) {
+        responseSent = true
         ctx.redirect(toPath(location))
-        isRedirected = true
+      }
+    }
+
+    function forbidden() {
+      if (!responseSent) {
+        responseSent = true
+        ctx.status = 403
       }
     }
 
     const app = createApp(null, {
       __ctx: ctx,
       __fiber: ctx.fiber,
-      __redirect: redirect
+      __redirect: redirect,
+      __forbidden: forbidden
     })
 
     ctx.app = app
-    if (isRedirected) {
+    if (responseSent) {
       return
     }
 
