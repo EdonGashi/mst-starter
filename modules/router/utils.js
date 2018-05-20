@@ -23,7 +23,7 @@ function merge(query, state) {
     }
 
     if (typeof query === 'string') {
-      query = qs.parse(query)
+      query = qs.parse(query, { ignoreQueryPrefix: true })
     } else if (typeof query !== 'object') {
       warning(false, 'Invalid query object.')
       return { _state: state }
@@ -71,7 +71,7 @@ export function transformLocation(arg) {
 }
 
 export function getLocation(location) {
-  const { _state, ...query } = qs.parse(location.search || '')
+  const { _state, ...query } = qs.parse(location.search || '', { ignoreQueryPrefix: true })
   const { state, isValidState } = tryDecode(_state)
   return {
     path: location.pathname,

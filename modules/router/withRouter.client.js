@@ -14,7 +14,7 @@ export function withRouter(routes, name = 'router', createHistory = createBrowse
     historyProps = getProps(app, historyProps)
     const router = hydrate(app, name, Router, { routes: routeCollection, createHistory, historyProps })
     if (!historyProps.noInitialRefresh) {
-      router.refresh('REPLACE', true, router._initialError)
+      router.refresh('PUSH', true, router._initialError)
     }
 
     router._initialError = null

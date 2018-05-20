@@ -13,7 +13,7 @@ export function withRouter(routes, name = 'router', createHistory = createMemory
   return function (app) {
     const newHistoryProps = getProps(app, historyProps)
     if (createHistory === createMemoryHistory && !newHistoryProps.initialEntries) {
-      newHistoryProps.initialEntries = [app.__volatile.__ctx.path]
+      newHistoryProps.initialEntries = [app.__volatile.__ctx.url]
     }
 
     const router = hydrate(app, name, Router, { routes: routeCollection, createHistory, historyProps: newHistoryProps })
