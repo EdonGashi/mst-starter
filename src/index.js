@@ -11,7 +11,7 @@ import createApp from 'init/createApp'
 
 let CurrentApp = App
 let currentApp = createApp(window.__STATE__)
-extendObservable(currentApp.__volatile, { initialRender: true })
+extendObservable(currentApp.__env, { initialRender: true, serverRender: true })
 
 let root = {}
 if (process.env.NODE_ENV !== 'production') {
@@ -36,7 +36,8 @@ function render() {
     document.getElementById('root')
   )
 
-  root.app.__volatile.initialRender = false
+  root.app.__env.initialRender = false
+  root.app.__env.serverRender = false
   if (process.env.NODE_ENV === 'development') {
     console.log('App render complete...')
   }

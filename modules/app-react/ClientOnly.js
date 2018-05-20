@@ -16,7 +16,7 @@ export class ClientOnly extends React.Component {
     if (process.env.IS_SERVER) {
       return null
     } else {
-      if (this.props.app.__volatile.initialRender) {
+      if (this.props.app.__env.initialRender) {
         return null
       } else {
         return typeof this.props.render === 'function'

@@ -15,7 +15,7 @@ export default function hook(path, name, type, env) {
 
       const viewModel = hydrate(app, finalPath, type, env)
       this.setState({ [name]: viewModel })
-      if (app.__volatile.initialRender) {
+      if (app.__env.initialRender) {
         viewModel.initialComponentWillMount && viewModel.initialComponentWillMount()
       } else {
         viewModel.componentWillMount && viewModel.componentWillMount()
@@ -25,7 +25,7 @@ export default function hook(path, name, type, env) {
       const { app } = this.context
       invariant(app, 'App root not found in context. Make sure to add a context provider.')
       const viewModel = this.state[name]
-      if (app.__volatile.initialRender) {
+      if (app.__env.initialRender) {
         viewModel.initialComponentDidMount && viewModel.initialComponentDidMount()
       } else {
         viewModel.componentDidMount && viewModel.componentDidMount()

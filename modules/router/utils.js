@@ -1,6 +1,7 @@
 import warning from 'utils/warning'
 import { encode, decode } from 'utils/string-encoding'
 import { parsePath } from 'history/PathUtils'
+import { createLocation } from 'history/LocationUtils'
 import qs from 'qs'
 
 function tryDecode(s) {
@@ -40,7 +41,7 @@ function merge(query, state) {
   }
 }
 
-function createLocation(path, query, state, hash) {
+function wrap(path, query, state, hash) {
   const { pathname, search: searchStr, hash: hashStr } = parsePath(path)
   warning(!(query && searchStr), 'A query string is found in path. This will be overwritten because \'query\' parameter exists in location.')
   warning(!(hash && hashStr), 'A hash string is found in path. This will be overwritten because \'hash\' parameter exists in location.')
@@ -51,26 +52,7 @@ function createLocation(path, query, state, hash) {
   }
 }
 
-export function transformLocation(arg) {
-  if (typeof arg === 'string') {
-    return arg
-  } else if (arg !== null && typeof arg === 'object') {
-    const {
-      path,
-      query,
-      state,
-      hash
-    } = arg
-    return createLocation(path, query, state, hash)
-  } else if (Array.isArray(arg)) {
-    const [path, query, state, hash] = arg
-    return createLocation(path, query, state, hash)
-  } else {
-    throw new Error('Invalid location.')
-  }
-}
-
-export function getLocation(location) {
+export function fromLocation(location) {
   const { _state, ...query } = qs.parse(location.search || '', { ignoreQueryPrefix: true })
   const { state, isValidState } = tryDecode(_state)
   return {
@@ -79,6 +61,34 @@ export function getLocation(location) {
     query,
     state,
     isValidState
+  }
+}
+
+export function toPath(arg, currentLocation) {
+  if (typeof arg === 'string') {
+    return createLocation(arg, null, null, currentLocation).pathname
+  } else if (arg !== null && typeof arg === 'object') {
+    return createLocation({
+      pathname: arg.path || arg.pathname
+    }, null, null, currentLocation).pathname
+  } else if (Array.isArray(arg)) {
+    return createLocation({
+      pathname: arg[0]
+    }, null, null, currentLocation).pathname
+  } else {
+    return null
+  }
+}
+
+export function toLocation(arg, currentLocation) {
+  if (typeof arg === 'string') {
+    return createLocation(arg, null, null, currentLocation)
+  } else if (arg !== null && typeof arg === 'object') {
+    return createLocation(wrap(arg.path || arg.pathname, arg.query, arg.state, arg.hash), null, null, currentLocation)
+  } else if (Array.isArray(arg)) {
+    return createLocation(wrap(arg[0], arg[1], arg[2], arg[3]), null, null, currentLocation)
+  } else {
+    throw new Error('Invalid location.')
   }
 }
 

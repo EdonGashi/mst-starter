@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'router-dom'
 import './Home.scss'
 
 export default class Home extends React.Component {
@@ -11,6 +12,11 @@ export default class Home extends React.Component {
   }
 
   render() {
-    return <div className='Home'>Home</div>
+    return <div className='Home'>
+      <div>
+        Home Page
+      </div>
+      <Link prefetch replace to='/about'>Visit About</Link>
+    </div>
   }
 }

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'router-dom'
 import './About.scss'
 
 export default class About extends React.Component {
@@ -11,6 +12,11 @@ export default class About extends React.Component {
   }
 
   render() {
-    return <div className='About'>About</div>
+    return <div className='About'>
+      <div>
+        About Page
+      </div>
+      <Link to='/home'>Visit Home</Link>
+    </div>
   }
 }

@@ -27,6 +27,10 @@ export class RouteView extends React.Component {
       return true
     }
 
+    if (current.app !== next.app) {
+      return true
+    }
+
     if (current.loading && next.loading) {
       return false
     }

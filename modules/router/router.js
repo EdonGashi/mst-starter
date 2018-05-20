@@ -1,6 +1,6 @@
-import { getLocation, transformLocation, getProps } from './utils'
+import { fromLocation, toLocation, toPath, getProps } from './utils'
 import warning from 'utils/warning'
-import { observable, computed } from 'mobx'
+import { observable, computed, set } from 'mobx'
 import { resolveDependencies, tracked } from 'app'
 import { stringify } from 'utils/error'
 
@@ -48,7 +48,7 @@ export class Router {
     const current = this._currentRoute
     const param = {
       action: action,
-      location: getLocation(location),
+      location: fromLocation(location),
       match,
       shallow: forceShallow || route === this._currentRoute,
       route,
@@ -115,7 +115,7 @@ export class Router {
     const shallow = forceShallow || route === this._currentRoute
     const routeParam = {
       action: action,
-      location: getLocation(location),
+      location: fromLocation(location),
       match,
       shallow,
       route
@@ -134,8 +134,7 @@ export class Router {
       onBefore: null,
       onAfter: null,
       error: forceError,
-      loading: false,
-      serverRender: process.env.IS_SERVER || !!app.__volatile.initialRender
+      loading: false
     }
 
     if (process.env.IS_SERVER) {
@@ -259,6 +258,10 @@ export class Router {
 
   constructor(snapshot, app, { routes, createHistory, historyProps }) {
     this._initialError = snapshot && snapshot.error
+    this._prefetchCache = {}
+    this._app = app
+    this._routes = routes
+
     let nextLocation = null
     let nextAction = null
     const history = createHistory({
@@ -266,8 +269,7 @@ export class Router {
       getUserConfirmation: (message, callback) =>
         this._beforeUpdate(nextLocation, nextAction, callback)
     })
-    this._app = app
-    this._routes = routes
+
     this._history = history
     this._unblock = history.block((location, action) => {
       nextLocation = location
@@ -311,36 +313,44 @@ export class Router {
     })
   }
 
+  createHref(path) {
+    return this._history.createHref(toLocation(path, this._history.location))
+  }
+
   push(path) {
     if (process.env.IS_SERVER) {
-      return this._app.__volatile.__redirect(transformLocation(path))
+      return this._app.__volatile.__redirect(toLocation(path, this._history.location))
     }
 
-    this._history.push(transformLocation(path))
+    this._history.push(toLocation(path, this._history.location))
   }
 
   replace(path) {
     if (process.env.IS_SERVER) {
-      return this._app.__volatile.__redirect(transformLocation(path))
+      return this._app.__volatile.__redirect(toLocation(path, this._history.location))
     }
 
-    this._history.replace(transformLocation(path))
+    this._history.replace(toLocation(path, this._history.location))
   }
 
   prefetch(path) {
-    if (process.env.IS_SERVER || !path) {
+    if (process.env.IS_SERVER) {
       return
     }
 
-    if (typeof path !== 'string') {
-      path = path.path || path.pathname
-      if (!path) {
-        return
-      }
+    path = toPath(path, this._history.location)
+    if (!path) {
+      return
+    }
+
+    if (path in this._prefetchCache) {
+      return
     }
 
     const match = this._routes.match(path)
     if (match) {
+      this._prefetchCache[path] = true
+      console.log('prefetching')
       match.route.component.preload()
     }
   }

@@ -18,7 +18,7 @@ export class ServerOnly extends React.Component {
         ? this.props.render()
         : this.props.children
     } else {
-      if (this.props.app.__volatile.initialRender) {
+      if (this.props.app.__env.initialRender) {
         return typeof this.props.render === 'function'
           ? this.props.render()
           : this.props.children

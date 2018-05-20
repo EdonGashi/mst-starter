@@ -30,7 +30,7 @@ export class Render extends React.Component {
         app
       }
     } else {
-      const initialRender = !!app.__volatile.initialRender
+      const initialRender = !!app.__env.initialRender
       context = {
         isServer: false,
         isClient: true,

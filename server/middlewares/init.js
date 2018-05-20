@@ -30,12 +30,17 @@ export default function init() {
       }
     }
 
-    const app = createApp(null, {
-      __ctx: ctx,
-      __fiber: ctx.fiber,
-      __redirect: redirect,
-      __forbidden: forbidden
-    })
+    const app = createApp(null,
+      {
+        __ctx: ctx,
+        __fiber: ctx.fiber,
+        __redirect: redirect,
+        __forbidden: forbidden
+      },
+      {
+        initialRender: false,
+        serverRender: true
+      })
 
     ctx.app = app
     if (responseSent) {

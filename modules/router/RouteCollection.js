@@ -1,5 +1,4 @@
 import invariant from 'utils/invariant'
-import warning from 'utils/warning'
 import universal from 'react-universal-component'
 import { matchRoutes } from 'react-router-config'
 
