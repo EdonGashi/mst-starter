@@ -1,5 +1,5 @@
 import Fiber from 'fibers'
-import { fromPromise } from 'mobx-utils/lib/from-promise'
+import { fromPromise } from 'mobx-utils'
 import warning from 'utils/warning'
 import invariant from 'utils/invariant'
 
