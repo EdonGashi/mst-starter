@@ -1,6 +1,7 @@
 import invariant from 'utils/invariant'
 import { toJS } from 'mobx'
-import { isStateTreeNode, getSnapshot } from 'mobx-state-tree'
+// For mst support enable this
+// import { isStateTreeNode, getSnapshot } from 'mobx-state-tree'
 
 function splitPath(path) {
   if (path instanceof Array) {
@@ -161,9 +162,11 @@ export function serialize(appNode, flag = null) {
     }
 
     let snapshot
-    if (isStateTreeNode(value)) {
-      snapshot = getSnapshot(value)
-    } else if (typeof value.toJSON === 'function') {
+    // For mst support enable this
+    // if (isStateTreeNode(value)) {
+    //   snapshot = getSnapshot(value)
+    // } else 
+    if (typeof value.toJSON === 'function') {
       snapshot = value.toJSON(flag)
     } else {
       snapshot = toJS(value)

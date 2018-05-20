@@ -1,4 +1,4 @@
-import { fromPromise } from 'mobx-utils'
+import { fromPromise } from 'mobx-utils/lib/from-promise'
 import invariant from 'utils/invariant'
 
 export function tracked(arg1, arg2, arg3, arg4) {
