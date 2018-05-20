@@ -16,7 +16,7 @@ export default class Home extends React.Component {
       <div>
         Home Page
       </div>
-      <Link prefetch replace to='/about'>Visit About</Link>
+      <Link to='/about'>Visit About</Link>
     </div>
   }
 }
