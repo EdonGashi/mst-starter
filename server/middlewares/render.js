@@ -85,7 +85,8 @@ ${js}
 </html>`
 
     const status = app.__volatile.__status
-    if (!isNaN(status)) {
+    if (status && !isNaN(status) && isFinite(status)) {
+      console.log(status)
       ctx.status = status
     }
 
