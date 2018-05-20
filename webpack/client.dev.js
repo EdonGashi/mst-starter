@@ -69,6 +69,17 @@ module.exports = {
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
+      name: 'main',
+      children: true,
+      minChunks: function (module, count) {
+        if (module.resource && (/^.*\.(css|scss)$/).test(module.resource)) {
+          return count > 1
+        }
+
+        return count > 3
+      }
+    }),
+    new webpack.optimize.CommonsChunkPlugin({
       names: ['bootstrap'], // needed to put webpack bootstrap code before chunks
       filename: '[name].js',
       minChunks: Infinity
