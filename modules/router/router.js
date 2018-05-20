@@ -1,7 +1,8 @@
 import { getLocation, transformLocation, getProps } from './utils'
 import warning from 'utils/warning'
-import { observable } from 'mobx'
+import { observable, computed } from 'mobx'
 import { resolveDependencies, tracked } from 'app'
+import { stringify } from 'utils/error'
 
 function once(fn) {
   let called = false
@@ -101,7 +102,7 @@ export class Router {
     callback(true)
   }
 
-  @tracked(false) async _onUpdate(location, action, forceShallow = false) {
+  @tracked(false) async _onUpdate(location, action, forceShallow = false, forceError = null) {
     const next = this._routes.match(location.pathname)
     if (!next) {
       this.routeProps = null
@@ -124,6 +125,7 @@ export class Router {
     const baseProps = getProps(propsParam, this._routes.props)
     const routeProps = getProps(propsParam, route.props)
     const props = {
+      shouldUpdate: !shallow,
       ...baseProps,
       ...routeProps,
       route: routeParam,
@@ -131,8 +133,9 @@ export class Router {
       app,
       onBefore: null,
       onAfter: null,
-      error: null,
-      loading: false
+      error: forceError,
+      loading: false,
+      serverRender: process.env.IS_SERVER || !!app.__volatile.initialRender
     }
 
     if (process.env.IS_SERVER) {
@@ -146,7 +149,7 @@ export class Router {
         try {
           await func.call(null, props, app)
         } catch (err) {
-          props.error = true
+          props.error = err
           console.error(err)
         } finally {
           props.loading = false
@@ -255,6 +258,7 @@ export class Router {
   }
 
   constructor(snapshot, app, { routes, createHistory, historyProps }) {
+    this._initialError = snapshot && snapshot.error
     let nextLocation = null
     let nextAction = null
     const history = createHistory({
@@ -262,7 +266,6 @@ export class Router {
       getUserConfirmation: (message, callback) =>
         this._beforeUpdate(nextLocation, nextAction, callback)
     })
-
     this._app = app
     this._routes = routes
     this._history = history
@@ -275,7 +278,23 @@ export class Router {
     this._unlisten = history.listen((location, action) => this._onUpdate(location, action))
   }
 
-  @tracked(false) refresh(action = 'REPLACE', forceShallow = false) {
+  @computed get route() {
+    if (!this.routeProps) {
+      return null
+    }
+
+    return this.routeProps.route
+  }
+
+  @computed get currentError() {
+    if (!this.routeProps) {
+      return null
+    }
+
+    return this.routeProps.error
+  }
+
+  @tracked(false) refresh(action = 'REPLACE', forceShallow = false, forceError = null) {
     const location = { ...this._history.location }
     return new Promise((resolve, reject) => {
       this._beforeUpdate(location, action, (decision, willRedirect) => {
@@ -287,7 +306,7 @@ export class Router {
           return resolve()
         }
 
-        this._onUpdate(location, action, forceShallow).then(resolve, reject)
+        this._onUpdate(location, action, forceShallow, forceError).then(resolve, reject)
       }, forceShallow)
     })
   }
@@ -338,6 +357,20 @@ export class Router {
       this._unlisten()
     }
 
-    return null
+    if (process.env.IS_SERVER) {
+      if (process.env.NODE_ENV === 'development') {
+        return {
+          error: stringify(this.currentError)
+        }
+      }
+
+      return {
+        error: !!this.currentError
+      }
+    }
+
+    return {
+      error: stringify(this.currentError)
+    }
   }
 }
