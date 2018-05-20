@@ -55,12 +55,12 @@ module.exports = {
     new ExtractCssChunks(),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
-      minChunks: function (module) {
+      minChunks: function (module, count) {
         if (module.resource && (/^.*\.(css|scss)$/).test(module.resource)) {
           return false
         }
 
-        return module.context && module.context.indexOf('node_modules') !== -1
+        return module.context && module.context.indexOf('node_modules') !== -1 && count > 2
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
@@ -68,10 +68,23 @@ module.exports = {
       children: true,
       minChunks: function (module, count) {
         if (module.resource && (/^.*\.(css|scss)$/).test(module.resource)) {
-          return count > 1
+          return false
         }
 
         return count > 2
+      }
+    }),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'main',
+      children: true,
+      deepChildren: true,
+      minChunks: function (module, count) {
+        console.log(module.resource, count)
+        if (module.resource && (/^.*\.(css|scss)$/).test(module.resource)) {
+          return count > 1
+        }
+
+        return false
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
