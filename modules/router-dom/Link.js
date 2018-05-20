@@ -85,4 +85,10 @@ export class Link extends React.Component {
       this.props.router.prefetch(this.props.to)
     }
   }
+
+  componentDidUpdate() {
+    if (this.props.prefetch) {
+      this.props.router.prefetch(this.props.to)
+    }
+  }
 }
