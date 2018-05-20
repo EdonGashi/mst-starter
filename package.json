@@ -1,8 +1,8 @@
 {
-  "name": "mst-starter",
+  "name": "universal-app",
   "version": "0.1.0",
-  "description": "mobx state transfer",
-  "main": "index.js",
+  "description": "Universal react app",
+  "main": "src/index.js",
   "directories": {
     "doc": "docs"
   },
@@ -15,8 +15,8 @@
     "postinstall": "cd node_modules/polyfill-service && npm run build"
   },
   "keywords": [
-    "mobx",
-    "mobx-state-tree"
+    "universal",
+    "react"
   ],
   "author": "Edon Gashi",
   "license": "MIT",
