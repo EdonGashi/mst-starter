@@ -379,6 +379,17 @@ export class Router {
     this._history.goForward()
   }
 
+  onDomError(error) {
+    if (!this.routeProps) {
+      return
+    }
+
+    this.routeProps = {
+      ...this.routeProps,
+      error
+    }
+  }
+
   toJSON(flag) {
     if (process.env.NODE_ENV === 'development' && flag === 'hot') {
       this._unblock()

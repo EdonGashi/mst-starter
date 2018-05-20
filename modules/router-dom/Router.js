@@ -64,6 +64,11 @@ export class Router extends React.Component {
   }
 
   render() {
-    return <RouteView routeProps={this.props.router.routeProps} />
+    const { router } = this.props
+    return <RouteView routeProps={router.routeProps} />
+  }
+
+  componentDidCatch(error) {
+    this.props.router.onDomError(error)
   }
 }

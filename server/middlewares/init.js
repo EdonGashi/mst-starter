@@ -51,6 +51,7 @@ export default function init() {
       await next()
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
+        ctx.status = 500
         ctx.body = errorFormatter(err)
         return
       }
