@@ -327,6 +327,24 @@ export class Router {
     this._history.replace(transformLocation(path))
   }
 
+  prefetch(path) {
+    if (process.env.IS_SERVER || !path) {
+      return
+    }
+
+    if (typeof path !== 'string') {
+      path = path.path || path.pathname
+      if (!path) {
+        return
+      }
+    }
+
+    const match = this._routes.match(path)
+    if (match) {
+      match.route.component.preload()
+    }
+  }
+
   go(n) {
     if (process.env.IS_SERVER) {
       throw new Error('Cannot perform this action server-side.')
