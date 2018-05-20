@@ -349,8 +349,11 @@ export class Router {
 
     const match = this._routes.match(path)
     if (match) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Prefetching '${path}'...`)
+      }
+
       this._prefetchCache[path] = true
-      console.log('prefetching')
       match.route.component.preload()
     }
   }
