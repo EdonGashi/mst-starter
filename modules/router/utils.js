@@ -42,8 +42,8 @@ function merge(query, state) {
 
 function createLocation(path, query, state, hash) {
   const { pathname, search: searchStr, hash: hashStr } = parsePath(path)
-  warning(query && searchStr, 'A query string is found in path. This will be overwritten because \'query\' parameter exists in location.')
-  warning(hash && hashStr, 'A hash string is found in path. This will be overwritten because \'hash\' parameter exists in location.')
+  warning(!(query && searchStr), 'A query string is found in path. This will be overwritten because \'query\' parameter exists in location.')
+  warning(!(hash && hashStr), 'A hash string is found in path. This will be overwritten because \'hash\' parameter exists in location.')
   return {
     pathname,
     search: merge(query || searchStr, state),
