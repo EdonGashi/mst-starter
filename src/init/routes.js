@@ -19,7 +19,7 @@ export default {
       exact: false,
       status: 404,
       view: [NotFound],
-      props: ({ route }) => ({ path: route.location.path })
+      props: ({ route }) => ({ path: route.location.path, shouldUpdate: true })
     }
   ]
 }

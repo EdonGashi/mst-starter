@@ -34,6 +34,8 @@ function merge(array) {
 }
 
 export default function render({ clientStats }) {
+  const serverRender = process.env.RENDER !== 'client'
+  const clientRender = process.env.RENDER !== 'server'
   const manifestName = filesFromChunks(['bootstrap'], clientStats.assetsByChunkName)[0]
   let bootstrap
   if (process.env.NODE_ENV === 'production') {
@@ -43,6 +45,28 @@ export default function render({ clientStats }) {
   }
 
   return function (ctx) {
+    const renderopts = ctx.render || {}
+    if (!serverRender) {
+      const { js, styles, cssHash } = flushChunks(clientStats, { chunkNames: [], before: ['vendor'] })
+      ctx.body = `<!DOCTYPE html>
+<html>
+<head>
+<title>App</title>
+${merge(renderopts.head)}
+${styles}
+</head>
+<body>
+<div id="root"></div>
+${merge(renderopts.scripts)}
+${bootstrap}
+<script>window.__SSR__=false</script>
+${cssHash}
+${js}
+</body>
+</html>`
+      return
+    }
+
     const app = ctx.app
     const helmetContext = {}
     let chunkNames = new Set()
@@ -58,14 +82,25 @@ export default function render({ clientStats }) {
 
     chunkNames = Array.from(chunkNames)
     const { js, styles, cssHash } = flushChunks(clientStats, { chunkNames, before: ['vendor'] })
-    // console.log('PATH', ctx.path)
-    // console.log('DYNAMIC CHUNK NAMES RENDERED', chunkNames)
-    // console.log('SCRIPTS SERVED', scripts)
-    // console.log('STYLESHEETS SERVED', stylesheets)
-    const renderopts = ctx.render || {}
     const { helmet } = helmetContext
 
-    const bodyString = `<!DOCTYPE html>
+    let bodyString
+    if (!clientRender || app.__volatile.__serverOnly || renderopts.serverOnly) {
+      bodyString = `<!DOCTYPE html>
+<html ${helmet.htmlAttributes.toString()}>
+<head>
+  ${helmet.meta.toString()}
+  ${helmet.title.toString()}
+  ${merge(renderopts.head)}
+  ${styles}
+  ${helmet.link.toString()}
+</head>
+<body ${helmet.bodyAttributes.toString()}>
+<div id="root">${domString}</div>
+</body>
+</html>`
+    } else {
+      bodyString = `<!DOCTYPE html>
 <html ${helmet.htmlAttributes.toString()}>
 <head>
   ${helmet.meta.toString()}
@@ -83,6 +118,7 @@ ${cssHash}
 ${js}
 </body>
 </html>`
+    }
 
     const status = app.__volatile.__status
     if (status && !isNaN(status) && isFinite(status)) {

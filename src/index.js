@@ -27,7 +27,12 @@ function render() {
 
   root.app = currentApp
   window.__APP__ = root.app
-  ReactDOM.hydrate(
+  let method = ReactDOM.hydrate
+  if (root.app.__env.initialRender && window.__SSR__ === false) {
+    method = ReactDOM.render
+  }
+
+  method(
     <HelmetProvider context={{}}>
       <Provider root={root}>
         <CurrentApp app={root.app} />

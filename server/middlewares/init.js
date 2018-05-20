@@ -9,6 +9,7 @@ function toPath(location) {
 }
 
 export default function init() {
+  const serverRender = process.env.RENDER !== 'client'
   return async function (ctx, next) {
     ctx.render = {
       head: [],
@@ -16,33 +17,36 @@ export default function init() {
     }
 
     let responseSent = false
-    function redirect(location) {
-      if (!responseSent) {
-        responseSent = true
-        ctx.redirect(toPath(location))
+    if (serverRender) {
+      function redirect(location) {
+        if (!responseSent) {
+          responseSent = true
+          ctx.redirect(toPath(location))
+        }
       }
+
+      function forbidden() {
+        if (!responseSent) {
+          responseSent = true
+          ctx.status = 403
+        }
+      }
+
+      const app = createApp(null,
+        {
+          __ctx: ctx,
+          __fiber: ctx.fiber,
+          __redirect: redirect,
+          __forbidden: forbidden
+        },
+        {
+          initialRender: false,
+          serverRender: true
+        })
+
+      ctx.app = app
     }
 
-    function forbidden() {
-      if (!responseSent) {
-        responseSent = true
-        ctx.status = 403
-      }
-    }
-
-    const app = createApp(null,
-      {
-        __ctx: ctx,
-        __fiber: ctx.fiber,
-        __redirect: redirect,
-        __forbidden: forbidden
-      },
-      {
-        initialRender: false,
-        serverRender: true
-      })
-
-    ctx.app = app
     if (responseSent) {
       return
     }
