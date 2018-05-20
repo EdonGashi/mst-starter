@@ -1,5 +1,5 @@
 import createApp from 'init/createApp'
-import errorFormatter from 'error-formatter'
+import { stringify } from 'utils/error'
 import { createPath } from 'history/PathUtils'
 
 function toPath(location) {
@@ -52,7 +52,7 @@ export default function init() {
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         ctx.status = 500
-        ctx.body = errorFormatter(err)
+        ctx.body = stringify(err)
         return
       }
 

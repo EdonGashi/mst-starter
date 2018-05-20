@@ -34,8 +34,14 @@ export function transformRoutes(routesObject) {
       invariant(typeof routeOptions === 'object', 'Route options must be an object.')
       const opts = { ...options, ...routeOptions }
       opts.onLoad = onLoad(opts)
-      route.component = universal(route.view, opts)
-      if (process.env.IS_SERVER) {
+      if (Array.isArray(route.view)) {
+        invariant(route.view.length === 1, 'Invalid view object.')
+        route.component = route.view[0]
+      } else {
+        route.component = universal(route.view, opts)
+      }
+
+      if (process.env.IS_SERVER && typeof route.component.preloadWeak === 'function') {
         route.component.preloadWeak()
       }
 
@@ -62,8 +68,9 @@ export function transformRoutes(routesObject) {
         component: route.component,
         props: route.props,
         path,
-        exact: !route.nonExact,
-        beforeEnter: route.beforeEnter || routesObject.beforeEnter
+        exact: route.exact !== false,
+        beforeEnter: route.beforeEnter || routesObject.beforeEnter,
+        status: route.status || routesObject.status
       })
     } else {
       path.forEach(str => {
@@ -72,8 +79,9 @@ export function transformRoutes(routesObject) {
           component: route.component,
           props: route.props,
           path: str,
-          exact: !route.nonExact,
-          beforeEnter: route.beforeEnter || routesObject.beforeEnter
+          exact: route.exact !== false,
+          beforeEnter: route.beforeEnter || routesObject.beforeEnter,
+          status: route.status || routesObject.status
         })
       })
     }

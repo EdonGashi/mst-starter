@@ -84,6 +84,11 @@ ${js}
 </body>
 </html>`
 
+    const status = app.__volatile.__status
+    if (!isNaN(status)) {
+      ctx.status = status
+    }
+
     ctx.body = bodyString
   }
 }

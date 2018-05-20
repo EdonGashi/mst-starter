@@ -24,7 +24,6 @@
     "adler-32": "^1.2.0",
     "colors": "^1.2.5",
     "compression-webpack-plugin": "^1.1.11",
-    "error-formatter": "^1.0.5",
     "fibers": "^2.0.2",
     "hi-base32": "^0.5.0",
     "history": "^4.7.2",

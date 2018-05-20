@@ -1,4 +1,5 @@
 import { fromLocation, toLocation, toPath, getProps } from './utils'
+import invariant from 'utils/invariant'
 import warning from 'utils/warning'
 import { observable, computed, set } from 'mobx'
 import { resolveDependencies, tracked } from 'app'
@@ -17,12 +18,12 @@ function once(fn) {
 export class Router {
   @observable.ref routeProps = null
 
-  get _currentRoute() {
+  get _currentComponent() {
     if (!this.routeProps) {
       return null
     }
 
-    return this.routeProps.route.route
+    return this.routeProps.route.route.component
   }
 
   @tracked(false) async _beforeUpdate(location, action, callback, forceShallow = false) {
@@ -38,28 +39,23 @@ export class Router {
     }
 
     const next = this._routes.match(location.pathname)
-    let route = null
-    let match = null
-    if (next) {
-      route = next.route
-      match = next.match
-    }
-
-    const current = this._currentRoute
+    invariant(next, 'No route matched, you must always specify a 404 fallback route.')
+    const { route, match } = next
+    const current = this._currentComponent
     const param = {
       action: action,
       location: fromLocation(location),
       match,
-      shallow: forceShallow || route === this._currentRoute,
+      shallow: forceShallow || route.component === current,
       route,
       app: this._app
     }
 
-    if (current && current.component) {
-      if (typeof current.component.beforeLeave === 'function') {
+    if (current) {
+      if (typeof current.beforeLeave === 'function') {
         let result
         try {
-          result = await current.component.beforeLeave(param, this._app)
+          result = await current.beforeLeave(param, this._app)
         } catch (err) {
           warning(false, 'A route method threw an error.')
         }
@@ -112,7 +108,7 @@ export class Router {
     const oldProps = this.routeProps
     const app = this._app
     const { route, match } = next
-    const shallow = forceShallow || route === this._currentRoute
+    const shallow = forceShallow || route.component === this._currentComponent
     const routeParam = {
       action: action,
       location: fromLocation(location),
@@ -139,6 +135,15 @@ export class Router {
 
     if (process.env.IS_SERVER) {
       const component = route.component
+      let status = route.status
+      if (typeof status === 'function') {
+        status = status(props)
+      }
+
+      if (!isNaN(status) && isFinite(status)) {
+        app.__volatile.__status = status
+      }
+
       if (component.dependencies && typeof component.dependencies === 'object') {
         resolveDependencies(app, component.dependencies)
       }
@@ -155,15 +160,19 @@ export class Router {
         }
       }
     } else {
-      try {
-        route.component.preloadWeak()
-      } catch (err) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(err)
+      let isSync = false
+      if (typeof route.component.preloadWeak === 'function') {
+        try {
+          isSync = !!route.component.preloadWeak()
+        } catch (err) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error(err)
+          }
         }
+      } else {
+        isSync = true
       }
 
-      const isSync = 'dependencies' in route.component
       if (isSync) {
         if (process.env.NODE_ENV === 'development') {
           console.log('Sync loading...', props)
