@@ -79,7 +79,6 @@ module.exports = {
       children: true,
       deepChildren: true,
       minChunks: function (module, count) {
-        console.log(module.resource, count)
         if (module.resource && (/^.*\.(css|scss)$/).test(module.resource)) {
           return count > 1
         }
