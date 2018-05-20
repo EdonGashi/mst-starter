@@ -60,7 +60,7 @@ module.exports = {
           return false
         }
 
-        return module.context && module.context.indexOf('node_modules') !== -1 && count > 2
+        return module.context && module.context.indexOf('node_modules') !== -1
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
