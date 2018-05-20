@@ -76,11 +76,11 @@ module.exports = {
           return count > 1
         }
 
-        return count > 3
+        return count > 2
       }
     }),
     new webpack.optimize.CommonsChunkPlugin({
-      names: ['bootstrap'], // needed to put webpack bootstrap code before chunks
+      name: 'bootstrap',
       filename: '[name].js',
       minChunks: Infinity
     }),
