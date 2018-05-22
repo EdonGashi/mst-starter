@@ -7,10 +7,12 @@ export default {
   status: ({ error }) => error && 500,
   routes: [
     {
+      id: 'home',
       path: ['/', '/home'],
       view: () => import(/* webpackChunkName: 'pages/home/Home' */ '../pages/home/Home'),
     },
     {
+      id: 'about',
       path: '/about',
       view: () => import(/* webpackChunkName: 'pages/about/About' */ '../pages/about/About'),
     },

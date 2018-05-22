@@ -65,6 +65,7 @@ export function transformRoutes(routesObject) {
 
     if (typeof path === 'string') {
       result.push({
+        id: route.id,
         component: route.component,
         props: route.props,
         path,
@@ -76,6 +77,7 @@ export function transformRoutes(routesObject) {
       path.forEach(str => {
         invariant(typeof str === 'string', 'Invalid path string in array.')
         result.push({
+          id: route.id,
           component: route.component,
           props: route.props,
           path: str,

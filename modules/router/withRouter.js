@@ -4,7 +4,7 @@ import { RouteCollection } from './RouteCollection'
 import { getProps } from './utils'
 import createMemoryHistory from 'history/createMemoryHistory'
 
-export function withRouter(routes, name = 'router', createHistory = createMemoryHistory, historyProps = {}) {
+export function withRouter(routes, name = 'router', createHistory = createMemoryHistory, historyProps = {}, controllersPath) {
   if (createHistory === 'default' || !createHistory) {
     createHistory = createMemoryHistory
   }
@@ -16,7 +16,13 @@ export function withRouter(routes, name = 'router', createHistory = createMemory
       newHistoryProps.initialEntries = [app.__volatile.__ctx.url]
     }
 
-    const router = hydrate(app, name, Router, { routes: routeCollection, createHistory, historyProps: newHistoryProps })
+    const router = hydrate(app, name, Router, {
+      routes: routeCollection,
+      createHistory,
+      historyProps: newHistoryProps,
+      controllersPath
+    })
+
     app.__env.router = router
     if (!newHistoryProps.noInitialRefresh) {
       router.refresh('PUSH', false, router._initialError)

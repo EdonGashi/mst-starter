@@ -4,7 +4,7 @@ import { toJS } from 'mobx'
 // import { isStateTreeNode, getSnapshot } from 'mobx-state-tree'
 
 function splitPath(path) {
-  if (path instanceof Array) {
+  if (Array.isArray(path)) {
     return path
   } else if (typeof path === 'string') {
     return path.split('.')
@@ -51,6 +51,16 @@ function initMiddleware(instance, app) {
   }
 }
 
+function buildEnv(app, env) {
+  if (typeof env === 'function') {
+    return env(app)
+  } else if (env && typeof env === 'object') {
+    return env
+  } else {
+    return {}
+  }
+}
+
 export function setHidden(obj, prop, value) {
   Object.defineProperty(obj, prop, {
     enumerable: false,
@@ -78,15 +88,15 @@ export function getLeaves(node, arr = []) {
   return arr
 }
 
-export function resolveDependencies(appNode, dependencies, env = {}) {
-  const app = appNode.__root
+export function resolveDependencies(appNode, dependencies, env) {
   invariant(dependencies && typeof dependencies === 'object', 'Invalid dependencies object.')
+  const app = appNode.__root
+  env = buildEnv(app, env)
   for (const dependency in dependencies) {
     let childType = dependencies[dependency]
     let childEnv
     if (Array.isArray(childType)) {
-      childEnv = childType[1] || {}
-      childEnv = { ...env, ...childEnv }
+      childEnv = { ...env, ...buildEnv(app, childType[1]) }
       childType = childType[0]
     } else {
       childEnv = env
@@ -96,8 +106,9 @@ export function resolveDependencies(appNode, dependencies, env = {}) {
   }
 }
 
-export function construct(appNode, type, snapshot, env = {}) {
+export function construct(appNode, type, snapshot, env) {
   const app = appNode.__root
+  env = buildEnv(app, env)
   if (type.dependencies && typeof type.dependencies === 'object') {
     resolveDependencies(app, type.dependencies, env)
   }

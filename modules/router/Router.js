@@ -1,8 +1,8 @@
 import { fromLocation, toLocation, toPath, getProps } from './utils'
 import invariant from 'utils/invariant'
 import warning from 'utils/warning'
-import { observable, computed, set } from 'mobx'
-import { resolveDependencies, tracked } from 'app'
+import { observable, computed } from 'mobx'
+import { resolveDependencies, tracked, hydrate } from 'app'
 import { stringify } from 'utils/error'
 
 function once(fn) {
@@ -24,6 +24,29 @@ export class Router {
     }
 
     return this.routeProps.route.route.component
+  }
+
+  _hydrate(component, id) {
+    const app = this._app
+    if (component.dependencies && typeof component.dependencies === 'object') {
+      resolveDependencies(app, component.dependencies)
+    }
+
+    if (component.controller) {
+      invariant(id, 'A controller is not allowed to be declared from a route without an id.')
+      const controllers = app[this._controllersPath]
+      if (!controllers || !(id in controllers)) {
+        let controllerType = component.controller
+        let env
+        if (Array.isArray(controllerType)) {
+          [controllerType, env] = controllerType
+        }
+
+        return hydrate(app, [this._controllersPath, id], controllerType, env)
+      }
+    } else {
+      return null
+    }
   }
 
   @tracked(false) async _beforeUpdate(location, action, callback, forceShallow = false) {
@@ -144,10 +167,7 @@ export class Router {
         app.__volatile.__status = status
       }
 
-      if (component.dependencies && typeof component.dependencies === 'object') {
-        resolveDependencies(app, component.dependencies)
-      }
-
+      props.controller = this._hydrate(component, route.id)
       const func = shallow ? component.onShallowEnter : component.onEnter
       if (typeof func === 'function') {
         try {
@@ -179,10 +199,7 @@ export class Router {
         }
 
         const component = route.component
-        if (component.dependencies && typeof component.dependencies === 'object') {
-          resolveDependencies(app, component.dependencies)
-        }
-
+        props.controller = this._hydrate(component, route.id)
         const func = shallow ? component.onShallowEnter : component.onEnter
         if (typeof func === 'function') {
           let promise
@@ -228,10 +245,7 @@ export class Router {
             }
 
             const newProps = { ...props }
-            if (component.dependencies && typeof component.dependencies === 'object') {
-              resolveDependencies(app, component.dependencies)
-            }
-
+            newProps.controller = this._hydrate(component, route.id)
             let rerender = false
             const func = shallow ? component.onShallowEnter : component.onEnter
             if (typeof func === 'function') {
@@ -265,11 +279,17 @@ export class Router {
     }
   }
 
-  constructor(snapshot, app, { routes, createHistory, historyProps }) {
+  constructor(snapshot, app, {
+    routes,
+    createHistory,
+    historyProps,
+    controllersPath
+  }) {
     this._initialError = snapshot && snapshot.error
     this._prefetchCache = {}
     this._app = app
     this._routes = routes
+    this._controllersPath = controllersPath || '_controllers'
 
     let nextLocation = null
     let nextAction = null

@@ -67,13 +67,13 @@ export function fromLocation(location) {
 export function toPath(arg, currentLocation) {
   if (typeof arg === 'string') {
     return createLocation(arg, null, null, currentLocation).pathname
-  } else if (arg !== null && typeof arg === 'object') {
-    return createLocation({
-      pathname: arg.path || arg.pathname
-    }, null, null, currentLocation).pathname
   } else if (Array.isArray(arg)) {
     return createLocation({
       pathname: arg[0]
+    }, null, null, currentLocation).pathname
+  } else if (arg !== null && typeof arg === 'object') {
+    return createLocation({
+      pathname: arg.path || arg.pathname
     }, null, null, currentLocation).pathname
   } else {
     return null
@@ -83,10 +83,10 @@ export function toPath(arg, currentLocation) {
 export function toLocation(arg, currentLocation) {
   if (typeof arg === 'string') {
     return createLocation(arg, null, null, currentLocation)
-  } else if (arg !== null && typeof arg === 'object') {
-    return createLocation(wrap(arg.path || arg.pathname, arg.query, arg.state, arg.hash), null, null, currentLocation)
   } else if (Array.isArray(arg)) {
     return createLocation(wrap(arg[0], arg[1], arg[2], arg[3]), null, null, currentLocation)
+  } else if (arg !== null && typeof arg === 'object') {
+    return createLocation(wrap(arg.path || arg.pathname, arg.query, arg.state, arg.hash), null, null, currentLocation)
   } else {
     throw new Error('Invalid location.')
   }
