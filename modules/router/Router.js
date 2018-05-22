@@ -43,6 +43,8 @@ export class Router {
         }
 
         return hydrate(app, [this._controllersPath, id], controllerType, env)
+      } else {
+        return controllers[id]
       }
     } else {
       return null
