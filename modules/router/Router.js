@@ -77,10 +77,11 @@ export class Router {
     }
 
     if (current) {
-      if (typeof current.beforeLeave === 'function') {
+      const handler = param.shallow ? current.beforeShallowLeave : current.beforeLeave
+      if (typeof handler === 'function') {
         let result
         try {
-          result = await current.beforeLeave(param, this._app)
+          result = await handler.call(current, param, this._app)
         } catch (err) {
           warning(false, 'A route method threw an error.')
         }
