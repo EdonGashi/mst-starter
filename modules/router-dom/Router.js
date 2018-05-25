@@ -31,11 +31,11 @@ export class RouteView extends React.Component {
       return true
     }
 
-    if (current.loading && next.loading) {
+    if (current.isLoading && next.isLoading) {
       return false
     }
 
-    if (!next.loading && !next.error && next.route.shallow && next.shouldUpdate === false) {
+    if (!next.isLoading && !next.error && next.route.shallow && next.shouldUpdate === false) {
       return false
     }
 
@@ -48,6 +48,7 @@ export class RouteView extends React.Component {
     }
 
     const { routeProps } = this.props
+    console.log(routeProps)
     if (routeProps) {
       const { error, ...props } = routeProps
       return <routeProps.route.route.component {...props} error={asError(error)} />

@@ -156,7 +156,7 @@ export class Router {
       onBefore: null,
       onAfter: null,
       error: forceError,
-      loading: false
+      isLoading: false
     }
 
     if (process.env.IS_SERVER) {
@@ -179,7 +179,7 @@ export class Router {
           props.error = err
           console.error(err)
         } finally {
-          props.loading = false
+          props.isLoading = false
         }
       }
     } else {
@@ -215,10 +215,10 @@ export class Router {
           if (promise && promise.then) {
             promise.then(
               () => {
-                if (this.routeProps === props && props.loading) {
+                if (this.routeProps === props && props.isLoading) {
                   this.routeProps = {
                     ...props,
-                    loading: false
+                    isLoading: false
                   }
                 }
               },
@@ -227,16 +227,16 @@ export class Router {
                   this.routeProps = {
                     ...props,
                     error: err,
-                    loading: false
+                    isLoading: false
                   }
                 }
               })
           } else {
-            props.loading = false
+            props.isLoading = false
           }
         }
       } else {
-        props.loading = true
+        props.isLoading = true
         const onEnter = once((component) => {
           setTimeout(async () => {
             if (this.routeProps !== props) {
@@ -254,10 +254,10 @@ export class Router {
             if (typeof func === 'function') {
               try {
                 await func.call(null, newProps, app)
-                newProps.loading = false
-                rerender = this.routeProps === props && props.loading
+                newProps.isLoading = false
+                rerender = this.routeProps === props && props.isLoading
               } catch (err) {
-                newProps.loading = false
+                newProps.isLoading = false
                 newProps.error = err
                 rerender = this.routeProps === props
               }
