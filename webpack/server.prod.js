@@ -1,12 +1,27 @@
+const fs = require('fs')
 const path = require('path')
 const webpack = require('webpack')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const nodeExternals = require('webpack-node-externals')
 
 const res = p => path.resolve(__dirname, p)
 
+const nodeModules = res('../node_modules')
 const entry = res('../server/configure.js')
 const output = res('../build-server')
+
+// if you're specifying externals to leave unbundled, you need to tell Webpack
+// to still bundle `react-universal-component`, `webpack-flush-chunks` and
+// `require-universal-module` so that they know they are running
+// within Webpack and can properly make connections to client modules:
+const externals = fs
+  .readdirSync(nodeModules)
+  .filter(x => !/\.bin|react-universal-component|webpack-flush-chunks/.test(x))
+  .reduce((externals, mod) => {
+    externals[mod] = `commonjs ${mod}`
+    return externals
+  }, {})
+
+externals['react-dom/server'] = 'commonjs react-dom/server'
 
 module.exports = {
   name: 'server',
@@ -15,9 +30,10 @@ module.exports = {
     __dirname: false,
     __filename: false
   },
-  externals: [nodeExternals()],
-  devtool: 'source-map',
+  // devtool: 'source-map',
+  devtool: 'eval',
   entry: [entry],
+  externals,
   output: {
     path: output,
     filename: '[name].js',
