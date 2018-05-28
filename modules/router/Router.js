@@ -26,6 +26,18 @@ export class Router {
     return this.routeProps.route.route.component
   }
 
+  get _currentRoute() {
+    if (!this.routeProps) {
+      return null
+    }
+
+    return this.routeProps.route.route
+  }
+
+  get serverRender() {
+    return !!this._app.__env.serverRender
+  }
+
   _hydrate(component, id) {
     const app = this._app
     if (component.dependencies && typeof component.dependencies === 'object') {
@@ -81,7 +93,10 @@ export class Router {
       if (typeof handler === 'function') {
         let result
         try {
-          result = await handler.call(current, param, this._app)
+          result = await handler.call(current, {
+            ...param,
+            controller: this.getCurrentController()
+          }, this._app)
         } catch (err) {
           warning(false, 'A route method threw an error.')
         }
@@ -102,6 +117,10 @@ export class Router {
         result = route.beforeEnter(param, this._app)
       } catch (err) {
         warning(false, 'A route method threw an error.')
+        if (process.env.NODE_ENV === 'development' || process.env.IS_SERVER) {
+          console.error(err)
+        }
+
         return callback(false)
       }
 
@@ -326,6 +345,25 @@ export class Router {
     }
 
     return this.routeProps.error
+  }
+
+  getCurrentController() {
+    return this.getController(this._currentRoute)
+  }
+
+  getController(route) {
+    if (route && typeof route === 'object') {
+      route = route.id
+    }
+
+    if (typeof route === 'string') {
+      const controllers = this._app[this._controllersPath]
+      if (controllers && controllers[route]) {
+        return controllers[route]
+      }
+    } else {
+      return null
+    }
   }
 
   @tracked(false) refresh(action = 'REPLACE', forceShallow = false, forceError = null) {
