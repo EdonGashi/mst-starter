@@ -34,6 +34,11 @@ export function transformRoutes(routesObject) {
       invariant(typeof routeOptions === 'object', 'Route options must be an object.')
       const opts = { ...options, ...routeOptions }
       opts.onLoad = onLoad(opts)
+      if (route.view) {
+        console.log('init', route.id)
+        invariant(route.id, 'If a route provides a view it must also include a unique id.')
+      }
+
       if (Array.isArray(route.view)) {
         invariant(route.view.length === 1, 'Invalid view object.')
         route.component = route.view[0]
