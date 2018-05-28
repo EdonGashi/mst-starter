@@ -38,14 +38,15 @@ function render() {
         <CurrentApp app={root.app} />
       </Provider>
     </HelmetProvider>,
-    document.getElementById('root')
+    document.getElementById('root'),
+    () => {
+      root.app.__env.initialRender = false
+      root.app.__env.serverRender = false
+      if (process.env.NODE_ENV === 'development') {
+        console.log('App render complete...')
+      }
+    }
   )
-
-  root.app.__env.initialRender = false
-  root.app.__env.serverRender = false
-  if (process.env.NODE_ENV === 'development') {
-    console.log('App render complete...')
-  }
 }
 
 if (process.env.NODE_ENV === 'development' && module.hot) {
