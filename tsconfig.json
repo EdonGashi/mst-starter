@@ -8,7 +8,10 @@
         "./src/*",
       ]
     },
-    "experimentalDecorators": true
+    "allowJs": false,
+    "checkJs": false,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*",

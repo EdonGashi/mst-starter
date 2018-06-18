@@ -17,6 +17,7 @@ export default {
       view: () => import(/* webpackChunkName: 'pages/about/About' */ '../pages/about/About'),
     },
     {
+      id: 'notfound',
       path: '/',
       exact: false,
       status: 404,

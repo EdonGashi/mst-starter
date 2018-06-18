@@ -35,7 +35,6 @@ export function transformRoutes(routesObject) {
       const opts = { ...options, ...routeOptions }
       opts.onLoad = onLoad(opts)
       if (route.view) {
-        console.log('init', route.id)
         invariant(route.id, 'If a route provides a view it must also include a unique id.')
       }
 

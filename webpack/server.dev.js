@@ -43,13 +43,19 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.jsx?$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
             forceEnv: 'node'
           }
+        }
+      },
+      {
+        test: /\.tsx?$/,
+        use: {
+          loader: 'ts-loader'
         }
       },
       {
@@ -72,7 +78,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules', '../modules', '../src'],
-    extensions: ['.js', '.scss', '.css']
+    extensions: ['.tsx', '.ts', '.js', '.scss', '.css']
   },
   plugins: [
     new CaseSensitivePathsPlugin(),

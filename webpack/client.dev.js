@@ -22,13 +22,19 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.jsx?$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
             forceEnv: 'browser'
           }
+        }
+      },
+      {
+        test: /\.tsx?$/,
+        use: {
+          loader: 'ts-loader'
         }
       },
       {
@@ -52,7 +58,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules', '../modules', '../src'],
-    extensions: ['.client.js', '.js', '.scss', '.css']
+    extensions: ['.client.tsx', '.client.ts', '.client.js', '.tsx', '.ts', '.js', '.scss', '.css']
   },
   plugins: [
     new CaseSensitivePathsPlugin(),
