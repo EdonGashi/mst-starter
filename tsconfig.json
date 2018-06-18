@@ -8,7 +8,7 @@
         "./src/*",
       ]
     },
-    "allowJs": false,
+    "allowJs": true,
     "checkJs": false,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true
